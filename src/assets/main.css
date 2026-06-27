@@ -263,7 +263,8 @@
     overflow-x: hidden;
   }
 
-  @media (max-width: 800px) {
+  /* ≤768px: sidebar collapses to a top bar */
+  @media (max-width: 768px) {
     .site-layout {
       grid-template-columns: 1fr;
       grid-template-rows: auto 1fr;
@@ -277,17 +278,29 @@
     }
 
     .sidebar-header {
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-bottom: none;
-      border-right: 1px solid rgba(255, 255, 255, 0.07);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
 
+    .sidebar-sub {
+      display: none;
+    }
+
     .sidebar-nav {
       display: flex;
+      flex-direction: row;
       margin: 0;
+      overflow-x: auto;
+    }
+
+    .sidebar-link {
+      padding: 10px 14px;
+      white-space: nowrap;
     }
   }
 }
@@ -850,36 +863,78 @@
     line-height: 1.6;
   }
 
-  /* Responsive */
+  /* ── Responsive ── */
+
+  /* ① ≤1080px: tablet — sidebar still present, content narrower */
   @media (max-width: 1080px) {
-    .page-head,
-    .add-grid,
-    .totals,
-    .quarter-grid,
-    .multiplier-grid,
-    .quarter-map,
-    .multiplier-cards {
+    .page-head {
       grid-template-columns: 1fr;
     }
 
     .badge {
       justify-self: start;
     }
+
+    /* add-grid: URL spans full row, months side-by-side, button below */
+    .add-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .add-grid > label:first-child {
+      grid-column: 1 / -1;
+    }
+
+    /* totals: 2×2 instead of jumping to 1 column */
+    .totals {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* quarter-grid: single column at tablet width */
+    .quarter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    /* multiplier-grid: 2 cols is comfortable at tablet */
+    .multiplier-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* rules page */
+    .quarter-map {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    /* .multiplier-cards stays 2-col — fits tablet fine */
   }
 
+  /* ② ≤768px: mobile — sidebar is now a top bar */
+  @media (max-width: 768px) {
+    .add-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .section-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+
+  /* ③ ≤620px: small mobile — everything single column, tighter spacing */
   @media (max-width: 620px) {
     .app-shell {
       width: min(100% - 24px, 680px);
       margin-top: 20px;
+      margin-bottom: 40px;
     }
 
     .panel {
       padding: 16px;
     }
 
-    .section-head {
-      align-items: flex-start;
-      flex-direction: column;
+    .totals,
+    .multiplier-grid,
+    .multiplier-cards,
+    .quarter-map {
+      grid-template-columns: 1fr;
     }
   }
 }
