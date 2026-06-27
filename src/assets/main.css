@@ -336,8 +336,6 @@
   }
 
   .sidebar-icon {
-    width: 15px;
-    height: 15px;
     flex-shrink: 0;
     opacity: 0.65;
   }
@@ -933,9 +931,9 @@
   }
 
   .mult-icon {
-    font-size: 20px;
-    line-height: 1;
     flex-shrink: 0;
+    color: var(--color-copper);
+    opacity: 0.75;
   }
 
   .mult-body h3 {

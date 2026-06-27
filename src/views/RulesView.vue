@@ -67,28 +67,28 @@
       </p>
       <div class="multiplier-cards">
         <div class="multiplier-card">
-          <div class="mult-icon">🚀</div>
+          <TrendingUp class="mult-icon" :size="20" :stroke-width="1.5" />
           <div class="mult-body">
             <h3>業績火箭倍率</h3>
             <p>依季度業績總額達成區間核定，業績越高、倍率越大。</p>
           </div>
         </div>
         <div class="multiplier-card">
-          <div class="mult-icon">🔁</div>
+          <Repeat2 class="mult-icon" :size="20" :stroke-width="1.5" />
           <div class="mult-body">
             <h3>回購倍率</h3>
             <p>依季度回購客戶占比核定，回購率越高、倍率越大。</p>
           </div>
         </div>
         <div class="multiplier-card">
-          <div class="mult-icon">💰</div>
+          <Banknote class="mult-icon" :size="20" :stroke-width="1.5" />
           <div class="mult-body">
             <h3>客單價倍率</h3>
             <p>依季度平均案件未連稅金額核定，客單價越高、倍率越大。</p>
           </div>
         </div>
         <div class="multiplier-card">
-          <div class="mult-icon">📐</div>
+          <Target class="mult-icon" :size="20" :stroke-width="1.5" />
           <div class="mult-body">
             <h3>成材率倍率</h3>
             <p>依報價轉成案比率核定，轉換率越高、倍率越大。</p>
@@ -125,6 +125,8 @@
 </template>
 
 <script setup lang="ts">
+import { TrendingUp, Repeat2, Banknote, Target } from 'lucide-vue-next'
+
 const quarters = [
   { key: 'Q1', months: '2 月 – 4 月', note: '（農曆年後啟動）' },
   { key: 'Q2', months: '5 月 – 7 月', note: '' },
