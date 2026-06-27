@@ -197,8 +197,7 @@ async function resyncAllVisible() {
   let ok = 0
   let fail = 0
 
-  for (let i = 0; i < targets.length; i++) {
-    const record = targets[i]
+  for (const [i, record] of targets.entries()) {
     showStatus(`正在同步 ${i + 1}/${targets.length}：${record.orderNo || record.quoteUrl}...`)
     setSyncing(record.id, true)
     try {
@@ -522,8 +521,7 @@ function downloadFile(filename: string, content: string, type: string) {
         <pre>
 npm install
 npm start
-打開 http://localhost:3000</pre
-        >
+打開 http://localhost:3000</pre>
       </div>
       <div class="add-grid">
         <label>
