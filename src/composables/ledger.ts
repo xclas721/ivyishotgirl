@@ -3,6 +3,7 @@
 import { computed, ref } from 'vue'
 import { getFiscalQuarter } from '@/shared/fiscalQuarter'
 import type { Quarter } from '@/shared/fiscalQuarter'
+import { normalizeCustomerType } from '@/shared/customerType'
 import * as db from '@/lib/db'
 import type { BonusRecord, QuarterMultiplier } from '@/lib/db'
 
@@ -271,14 +272,11 @@ export function normalizeRecord(record: Partial<BonusRecord>): BonusRecord | nul
     quoteUrl: String(record.quoteUrl || '').trim(),
     orderNo: String(record.orderNo || ''),
     customerName: String(record.customerName || ''),
-    customerType: ['company', 'personal', 'unknown'].includes(String(record.customerType))
-      ? record.customerType || 'unknown'
-      : 'unknown',
+    customerType: normalizeCustomerType(String(record.customerType)),
     taxExcludedAmount: toNumber(record.taxExcludedAmount),
     taxIncludedAmount: toNumber(record.taxIncludedAmount),
     signedMonth: String(record.signedMonth || '').slice(0, 7),
     paidMonth: String(record.paidMonth || currentMonth()).slice(0, 7),
-    baseCommissionRate: toNumber(record.baseCommissionRate || 4),
     amountInferred: Boolean(record.amountInferred),
     amountDebug: record.amountDebug || {},
     signedAtText: String(record.signedAtText || ''),
@@ -308,7 +306,9 @@ export function updateRecord(
   field: keyof BonusRecord,
   value: string | number,
 ) {
-  if (['taxIncludedAmount', 'taxExcludedAmount', 'baseCommissionRate'].includes(field)) {
+  if (field === 'customerType') {
+    record.customerType = normalizeCustomerType(String(value))
+  } else if (['taxIncludedAmount', 'taxExcludedAmount'].includes(field)) {
     ;(record[field] as number) = Math.max(0, toNumber(value))
   } else {
     ;(record[field] as string) = String(value)

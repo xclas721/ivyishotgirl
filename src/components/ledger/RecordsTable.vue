@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import { ExternalLink, RefreshCw, Trash2 } from 'lucide-vue-next'
 import { getFiscalQuarter, multipliersApply } from '@/shared/fiscalQuarter'
-import type { BonusRecord, CustomerType } from '@/lib/db'
+import type { BonusRecord } from '@/lib/db'
+import { CUSTOMER_TYPE_OPTIONS } from '@/shared/customerType'
 import {
   combinedMultiplier,
   formatNumber,
@@ -11,7 +12,7 @@ import {
   multiplierSummary,
   updateRecord,
 } from '@/composables/ledger'
-import { finalCommissionFor } from '@/composables/ledgerSummary'
+import { finalCommissionDisplay } from '@/composables/ledgerSummary'
 
 const props = defineProps<{
   records: BonusRecord[]
@@ -38,16 +39,17 @@ const sortedRecords = computed(() =>
   [...props.records].sort((a, b) => (b.paidMonth || '').localeCompare(a.paidMonth || '')),
 )
 
-function customerTypeLabel(type: CustomerType) {
-  return type === 'company' ? '公司 / 設計師' : type === 'personal' ? '個人業主' : '未知'
-}
-
 function recordWarnings(record: BonusRecord) {
   const warnings = []
   if (!record.signedMonth) warnings.push('未抓到回簽月份，請手動選擇')
-  if (record.customerType === 'unknown') warnings.push('請確認獎金%')
+  if (record.customerType === 'unknown') warnings.push('請選擇客戶類型')
   if (record.amountInferred) warnings.push('金額為系統反推，請確認')
   return warnings.join('；')
+}
+
+function formatFinalCommission(record: BonusRecord) {
+  const value = finalCommissionDisplay(record)
+  return value === '無法計算' ? '無法計算' : money.format(value)
 }
 
 function isSyncing(id: string) {
@@ -64,7 +66,7 @@ function isSyncing(id: string) {
           <th colspan="2" class="colgroup-head">月份</th>
           <th colspan="2" class="colgroup-head">季度</th>
           <th colspan="2" class="colgroup-head">金額</th>
-          <th colspan="3" class="colgroup-head">獎金</th>
+          <th colspan="2" class="colgroup-head">獎金</th>
           <th rowspan="2" class="colgroup-head colgroup-actions">操作</th>
         </tr>
         <tr>
@@ -77,7 +79,6 @@ function isSyncing(id: string) {
           <th>發放季度</th>
           <th>未連稅金額</th>
           <th>總計</th>
-          <th>基礎獎金%</th>
           <th>套用倍率</th>
           <th>最終獎金</th>
         </tr>
@@ -103,10 +104,30 @@ function isSyncing(id: string) {
             <span v-else>{{ record.orderNo || '-' }}</span>
           </td>
           <td class="sticky-col sticky-col-2">{{ record.customerName || '-' }}</td>
-          <td class="sticky-col sticky-col-3">
-            <span class="type-pill" :class="{ unknown: record.customerType === 'unknown' }">{{
-              customerTypeLabel(record.customerType)
-            }}</span>
+          <td class="sticky-col sticky-col-3 type-cell">
+            <select
+              class="type-select"
+              :class="{ unknown: record.customerType === 'unknown' }"
+              :value="record.customerType"
+              @change="
+                updateRecord(
+                  record,
+                  'customerType',
+                  ($event.target as HTMLSelectElement).value,
+                )
+              "
+            >
+              <option v-if="record.customerType === 'unknown'" value="unknown" disabled>
+                請選擇
+              </option>
+              <option
+                v-for="option in CUSTOMER_TYPE_OPTIONS"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}（{{ option.rate }}%）
+              </option>
+            </select>
             <div v-if="recordWarnings(record)" class="status error">
               {{ recordWarnings(record) }}
             </div>
@@ -159,21 +180,6 @@ function isSyncing(id: string) {
               "
             />
           </td>
-          <td class="rate">
-            <input
-              :value="record.baseCommissionRate"
-              type="number"
-              min="0"
-              step="0.1"
-              @input="
-                updateRecord(
-                  record,
-                  'baseCommissionRate',
-                  ($event.target as HTMLInputElement).value,
-                )
-              "
-            />
-          </td>
           <td class="mult-cell">
             <template v-if="multipliersApply(getFiscalQuarter(record.signedMonth).key)">
               <span
@@ -199,10 +205,7 @@ function isSyncing(id: string) {
             <span v-else class="muted-cell">無倍率</span>
           </td>
           <td class="bonus">
-            <template v-if="multipliersApply(getFiscalQuarter(record.signedMonth).key)">
-              {{ money.format(finalCommissionFor(record)) }}
-            </template>
-            <span v-else class="muted-cell">無法計算</span>
+            {{ formatFinalCommission(record) }}
           </td>
           <td class="actions-cell">
             <div class="table-actions">

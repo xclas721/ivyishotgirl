@@ -799,7 +799,7 @@
 
   .add-url-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 160px auto;
+    grid-template-columns: minmax(0, 1fr) 148px 160px auto;
     gap: 8px;
     align-items: end;
   }
@@ -811,7 +811,8 @@
     color: var(--color-muted);
   }
 
-  .add-url-field input {
+  .add-url-field input,
+  .add-url-field select {
     min-height: 36px;
   }
 
@@ -1383,7 +1384,23 @@
 
   .records-table .sticky-col-3 {
     left: 238px;
-    min-width: 128px;
+    min-width: 148px;
+  }
+
+  .records-table .type-select {
+    width: 100%;
+    min-height: 32px;
+    padding: 4px 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.72);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .records-table .type-select.unknown {
+    color: var(--color-muted);
   }
 
   .records-table th.colgroup-actions,
@@ -1506,6 +1523,30 @@
     background: rgba(110, 103, 98, 0.07);
     color: var(--color-muted);
     border-color: rgba(110, 103, 98, 0.14);
+  }
+
+  .type-pill.biz {
+    background: rgba(46, 95, 168, 0.07);
+    color: #2e5fa8;
+    border-color: rgba(46, 95, 168, 0.15);
+  }
+
+  .type-pill.kitchen {
+    background: rgba(122, 92, 26, 0.07);
+    color: #7a5c1a;
+    border-color: rgba(122, 92, 26, 0.15);
+  }
+
+  .type-pill.designer {
+    background: rgba(26, 106, 79, 0.07);
+    color: var(--color-success);
+    border-color: rgba(26, 106, 79, 0.15);
+  }
+
+  .type-pill.personal {
+    background: rgba(168, 113, 46, 0.07);
+    color: var(--color-copper-dark);
+    border-color: rgba(168, 113, 46, 0.17);
   }
 
   /* Empty / notice */

@@ -1,13 +1,14 @@
 import { supabase } from './supabase'
+import type { CustomerType } from '@/shared/customerType'
+import { normalizeCustomerType } from '@/shared/customerType'
 
+export type { CustomerType } from '@/shared/customerType'
 export interface QuarterMultiplier {
   rocket: number
   repurchase: number
   avgOrder: number
   yieldRate: number
 }
-
-export type CustomerType = 'company' | 'personal' | 'unknown'
 
 export interface BonusRecord {
   id: string
@@ -19,7 +20,6 @@ export interface BonusRecord {
   taxIncludedAmount: number
   signedMonth: string
   paidMonth: string
-  baseCommissionRate: number
   amountInferred: boolean
   amountDebug: Record<string, unknown>
   signedAtText: string
@@ -39,7 +39,6 @@ function recordToRow(r: BonusRecord) {
     tax_included_amount: Math.round(r.taxIncludedAmount),
     signed_month: r.signedMonth,
     paid_month: r.paidMonth,
-    base_commission_rate: r.baseCommissionRate,
     amount_inferred: r.amountInferred,
     amount_debug: r.amountDebug,
     signed_at_text: r.signedAtText,
@@ -48,20 +47,17 @@ function recordToRow(r: BonusRecord) {
 }
 
 function rowToRecord(row: Record<string, unknown>): BonusRecord {
-  const ct = String(row.customer_type ?? 'unknown')
+  const ct = normalizeCustomerType(String(row.customer_type ?? 'unknown'))
   return {
     id: String(row.id ?? ''),
     quoteUrl: String(row.quote_url ?? ''),
     orderNo: String(row.order_no ?? ''),
     customerName: String(row.customer_name ?? ''),
-    customerType: (['company', 'personal', 'unknown'].includes(ct)
-      ? ct
-      : 'unknown') as CustomerType,
+    customerType: ct,
     taxExcludedAmount: Number(row.tax_excluded_amount ?? 0),
     taxIncludedAmount: Number(row.tax_included_amount ?? 0),
     signedMonth: String(row.signed_month ?? ''),
     paidMonth: String(row.paid_month ?? ''),
-    baseCommissionRate: Number(row.base_commission_rate ?? 4),
     amountInferred: Boolean(row.amount_inferred),
     amountDebug: (row.amount_debug as Record<string, unknown>) ?? {},
     signedAtText: String(row.signed_at_text ?? ''),

@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { getFiscalQuarter, multipliersApply } from '@/shared/fiscalQuarter'
 import type { QuarterInfo } from '@/shared/fiscalQuarter'
 import type { BonusRecord } from '@/lib/db'
+import { commissionRateFor } from '@/shared/customerType'
 import {
   visibleRecords,
   paidVisibleRecords,
@@ -30,12 +31,17 @@ export interface LedgerSummaryResult {
 }
 
 export function baseCommissionFor(record: BonusRecord) {
-  return (toNumber(record.taxExcludedAmount) * toNumber(record.baseCommissionRate)) / 100
+  const rate = commissionRateFor(record.customerType)
+  return (toNumber(record.taxExcludedAmount) * rate) / 100
+}
+
+export function isCommissionComputable(record: BonusRecord): boolean {
+  return multipliersApply(getFiscalQuarter(record.signedMonth).key)
 }
 
 export function finalCommissionFor(record: BonusRecord) {
   const signedQuarter = getFiscalQuarter(record.signedMonth).key
-  if (!multipliersApply(signedQuarter)) return Math.round(baseCommissionFor(record))
+  if (!multipliersApply(signedQuarter)) return 0
   const multiplier = multiplierFor(signedQuarter)
   return Math.round(
     baseCommissionFor(record) *
@@ -44,6 +50,11 @@ export function finalCommissionFor(record: BonusRecord) {
       toNumber(multiplier.avgOrder || 1) *
       toNumber(multiplier.yieldRate || 1),
   )
+}
+
+export function finalCommissionDisplay(record: BonusRecord): number | '無法計算' {
+  if (!isCommissionComputable(record)) return '無法計算'
+  return finalCommissionFor(record)
 }
 
 function ensureSummary(map: Map<string, QuarterSummary>, quarter: QuarterInfo) {

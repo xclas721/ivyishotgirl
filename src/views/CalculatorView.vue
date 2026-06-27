@@ -4,6 +4,12 @@ import { Plus, X } from 'lucide-vue-next'
 import { getFiscalQuarter, multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
 import type { Quarter } from '@/shared/fiscalQuarter'
 import type { CustomerType } from '@/lib/db'
+import {
+  CUSTOMER_TYPE_OPTIONS,
+  commissionRateFor,
+  customerTypeLabel,
+  defaultCustomerType,
+} from '@/shared/customerType'
 import type { BonusRecord } from '@/lib/db'
 import DbStatusBanner from '@/components/layout/DbStatusBanner.vue'
 import LedgerTabs from '@/components/ledger/LedgerTabs.vue'
@@ -28,7 +34,7 @@ import {
   canonicalUrl,
   currentMonth,
 } from '@/composables/ledger'
-import { finalCommissionFor, ledgerSummary } from '@/composables/ledgerSummary'
+import { finalCommissionDisplay, ledgerSummary } from '@/composables/ledgerSummary'
 
 const money = new Intl.NumberFormat('zh-TW', {
   style: 'currency',
@@ -40,10 +46,11 @@ const integer = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 })
 interface QuoteDraftRow {
   url: string
   paidMonth: string
+  customerType: CustomerType
 }
 
 function newQuoteDraftRow(): QuoteDraftRow {
-  return { url: '', paidMonth: currentMonth() }
+  return { url: '', paidMonth: currentMonth(), customerType: defaultCustomerType() }
 }
 
 const visibleSections = ref<LedgerTabId[]>(['overview', 'records'])
@@ -113,7 +120,11 @@ async function fetchQuotes() {
   }
 
   const entries = quoteDrafts.value
-    .map((row) => ({ url: row.url.trim(), paidMonth: row.paidMonth }))
+    .map((row) => ({
+      url: row.url.trim(),
+      paidMonth: row.paidMonth,
+      customerType: row.customerType,
+    }))
     .filter((row) => row.url)
   if (entries.length === 0) return showStatus('請先輸入報價單網址。', 'error')
   if (entries.some((entry) => !isValidQuoteUrl(entry.url))) {
@@ -143,6 +154,7 @@ async function fetchQuotes() {
           quoteUrl: quote.quoteUrl || entry.url,
           signedMonth: finalSignedMonth,
           paidMonth: entry.paidMonth,
+          customerType: entry.customerType,
         }),
       )
       ok += 1
@@ -229,12 +241,17 @@ async function syncRecordFromQuote(record: BonusRecord) {
   const quote = await requestQuote(inputUrl)
   const finalSignedMonth = record.signedMonth || quote.signedMonth || ''
   upsertRecord(
-    applyQuoteToRecord(quote, {
-      id: record.id,
-      quoteUrl: record.quoteUrl,
-      signedMonth: finalSignedMonth,
-      paidMonth: record.paidMonth,
-    }),
+    applyQuoteToRecord(
+      quote,
+      {
+        id: record.id,
+        quoteUrl: record.quoteUrl,
+        signedMonth: finalSignedMonth,
+        paidMonth: record.paidMonth,
+        customerType: record.customerType,
+      },
+      { preserveCustomerFields: true },
+    ),
   )
   return { quote, finalSignedMonth }
 }
@@ -309,19 +326,30 @@ async function requestQuote(inputUrl: string): Promise<QuoteResponse> {
 
 function applyQuoteToRecord(
   quote: QuoteResponse,
-  base: { id: string; quoteUrl: string; signedMonth: string; paidMonth: string },
+  base: {
+    id: string
+    quoteUrl: string
+    signedMonth: string
+    paidMonth: string
+    customerType?: CustomerType
+  },
+  options?: { preserveCustomerFields?: boolean },
 ): BonusRecord {
+  const preserveCustomer = options?.preserveCustomerFields ?? false
+  const customerType = preserveCustomer
+    ? base.customerType || 'unknown'
+    : base.customerType || defaultCustomerType()
+
   return {
     id: base.id,
     quoteUrl: quote.quoteUrl || base.quoteUrl,
     orderNo: quote.orderNo || '',
     customerName: quote.customerName || '',
-    customerType: quote.customerType || 'unknown',
+    customerType,
     taxExcludedAmount: Number(quote.taxExcludedAmount || 0),
     taxIncludedAmount: Number(quote.taxIncludedAmount || 0),
     signedMonth: base.signedMonth,
     paidMonth: base.paidMonth,
-    baseCommissionRate: Number(quote.defaultCommissionRate || 4),
     amountInferred: Boolean(quote.amountInferred),
     amountDebug: quote.amountDebug || {},
     signedAtText: quote.signedAtText || '',
@@ -336,7 +364,6 @@ function quoteResultMessage(
 ): [string, string] {
   const warnings = []
   if (!finalSignedMonth) warnings.push('未抓到回簽月份，請手動選擇')
-  if (quote.customerType === 'unknown') warnings.push('客戶類型無法判斷，請確認獎金%')
   if (quote.amountInferred) warnings.push('金額為系統反推，請確認')
   return warnings.length
     ? [`${verb}，但${warnings.join('、')}。`, 'error']
@@ -356,6 +383,11 @@ function deleteRecord(id: string) {
 }
 
 function exportCsv() {
+  if (visibleRecords.value.length === 0) {
+    showStatus('此篩選條件下無資料可匯出。', 'error')
+    return
+  }
+
   const headers = [
     '報價單網址',
     '案件編號',
@@ -373,7 +405,9 @@ function exportCsv() {
     '簽約依據',
     '金額來源',
   ]
-  const rows = visibleRecords.value.map((record) => {
+  const rows = [...visibleRecords.value]
+    .sort((a, b) => (b.paidMonth || '').localeCompare(a.paidMonth || ''))
+    .map((record) => {
     const signedQuarter = getFiscalQuarter(record.signedMonth)
     const paidQuarter = getFiscalQuarter(record.paidMonth)
     const multiplierText = multipliersApply(signedQuarter.key)
@@ -390,9 +424,9 @@ function exportCsv() {
       paidQuarter.key,
       Math.round(record.taxExcludedAmount),
       Math.round(record.taxIncludedAmount),
-      record.baseCommissionRate,
+      commissionRateFor(record.customerType),
       multiplierText,
-      finalCommissionFor(record),
+      finalCommissionDisplay(record),
       record.signedAtText,
       amountDebugText(record.amountDebug),
     ]
@@ -408,10 +442,6 @@ function amountDebugText(debug: Record<string, unknown> = {}) {
   if (debug.taxIncludedLabel)
     parts.push(`總計: ${debug.taxIncludedLabel} ${debug.taxIncludedRaw || ''}`.trim())
   return parts.join('；')
-}
-
-function customerTypeLabel(type: CustomerType) {
-  return type === 'company' ? '公司 / 設計師' : type === 'personal' ? '個人業主' : '未知'
 }
 
 function showStatus(message: string, tone = '') {
@@ -508,6 +538,18 @@ npm start
               @keydown.enter.prevent="fetchQuotes"
             />
           </label>
+          <label class="add-url-field add-url-field--type">
+            客戶類型
+            <select v-model="draft.customerType">
+              <option
+                v-for="option in CUSTOMER_TYPE_OPTIONS"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}（{{ option.rate }}%）
+              </option>
+            </select>
+          </label>
           <label class="add-url-field add-url-field--paid">
             收款月份
             <input v-model="draft.paidMonth" type="month" />
@@ -542,7 +584,7 @@ npm start
           </button>
         </div>
       </div>
-      <p class="hint">回簽月份由報價單自動帶入；每列可各自設定收款月份。</p>
+      <p class="hint">回簽月份由報價單自動帶入；每列請選擇客戶類型與收款月份。</p>
       <p class="status" :class="status.tone">{{ status.message }}</p>
     </section>
 
