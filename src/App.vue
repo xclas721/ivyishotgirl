@@ -1,16 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { getFiscalQuarter } from '@/shared/fiscalQuarter'
+import type { Quarter, QuarterInfo } from '@/shared/fiscalQuarter'
 
 type CustomerType = 'company' | 'personal' | 'unknown'
-type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4'
-
-interface QuarterInfo {
-  year: number
-  quarter: Quarter | ''
-  key: string
-  range: string
-  order: number
-}
 
 interface QuarterMultiplier {
   rocket: number
@@ -32,10 +25,7 @@ interface BonusRecord {
   baseCommissionRate: number
   amountInferred: boolean
   amountDebug: Record<string, unknown>
-  signatureDebug: Record<string, unknown>
   signedAtText: string
-  parsedSignedMonth: string
-  parsedSignedQuarterKey: string
   updatedAt: string
 }
 
@@ -49,7 +39,6 @@ interface QuoteResponse {
   defaultCommissionRate?: number
   amountInferred?: boolean
   amountDebug?: Record<string, unknown>
-  signatureDebug?: Record<string, unknown>
   signedAtText?: string
   signedMonth?: string
   signedQuarterKey?: string
@@ -86,6 +75,7 @@ const integer = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 })
 const quoteUrl = ref('')
 const signedMonth = ref('')
 const paidMonth = ref(currentMonth())
+const newYear = ref('')
 const status = reactive({ message: '', tone: '' })
 const isFetching = ref(false)
 const apiOk = ref(false)
@@ -183,10 +173,7 @@ async function fetchQuote() {
       baseCommissionRate: Number(quote.defaultCommissionRate || 4),
       amountInferred: Boolean(quote.amountInferred),
       amountDebug: quote.amountDebug || {},
-      signatureDebug: quote.signatureDebug || {},
       signedAtText: quote.signedAtText || '',
-      parsedSignedMonth: quote.signedMonth || '',
-      parsedSignedQuarterKey: quote.signedQuarterKey || '',
       updatedAt: new Date().toISOString(),
     })
 
@@ -222,8 +209,6 @@ function upsertRecord(record: BonusRecord) {
 
 function normalizeRecord(record: Partial<BonusRecord>): BonusRecord | null {
   if (!record || !record.quoteUrl) return null
-  const taxExcludedAmount = toNumber(record.taxExcludedAmount)
-  const taxIncludedAmount = toNumber(record.taxIncludedAmount)
   return {
     id: record.id || canonicalUrl(record.quoteUrl),
     quoteUrl: String(record.quoteUrl || '').trim(),
@@ -232,17 +217,14 @@ function normalizeRecord(record: Partial<BonusRecord>): BonusRecord | null {
     customerType: ['company', 'personal', 'unknown'].includes(String(record.customerType))
       ? record.customerType || 'unknown'
       : 'unknown',
-    taxExcludedAmount: taxExcludedAmount || Math.round(taxIncludedAmount / 1.05),
-    taxIncludedAmount: taxIncludedAmount || Math.round(taxExcludedAmount * 1.05),
-    signedMonth: String(record.signedMonth || record.parsedSignedMonth || '').slice(0, 7),
+    taxExcludedAmount: toNumber(record.taxExcludedAmount),
+    taxIncludedAmount: toNumber(record.taxIncludedAmount),
+    signedMonth: String(record.signedMonth || '').slice(0, 7),
     paidMonth: String(record.paidMonth || currentMonth()).slice(0, 7),
     baseCommissionRate: toNumber(record.baseCommissionRate || 4),
     amountInferred: Boolean(record.amountInferred),
     amountDebug: record.amountDebug || {},
-    signatureDebug: record.signatureDebug || {},
     signedAtText: String(record.signedAtText || ''),
-    parsedSignedMonth: String(record.parsedSignedMonth || record.signedMonth || '').slice(0, 7),
-    parsedSignedQuarterKey: String(record.parsedSignedQuarterKey || ''),
     updatedAt: record.updatedAt || new Date().toISOString(),
   }
 }
@@ -265,14 +247,15 @@ function updateMultiplier(key: string, field: keyof QuarterMultiplier, value: st
   saveMultipliers()
 }
 
-function addMultiplierYear() {
-  const year = prompt('請輸入要新增設定的年份，例如 2026：', String(new Date().getFullYear()))
-  if (!/^\d{4}$/.test(String(year || ''))) return showStatus('年份格式需為 YYYY。', 'error')
+function commitAddYear() {
+  const year = newYear.value.trim()
+  if (!/^\d{4}$/.test(year)) return showStatus('年份格式需為 YYYY。', 'error')
   ;(['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]).forEach((quarter) =>
     ensureMultiplier(`${year}-${quarter}`),
   )
   saveMultipliers()
   showStatus(`已新增 ${year} 年 Q1-Q4 倍率設定。`, 'ok')
+  newYear.value = ''
 }
 
 function updateRecord(record: BonusRecord, field: keyof BonusRecord, value: string | number) {
@@ -362,9 +345,8 @@ function exportCsv() {
     '基礎獎金%',
     '套用倍率摘要',
     '最終獎金',
-    'signedAtText',
-    'amountDebug',
-    'signatureDebug',
+    '簽約依據',
+    '金額來源',
   ]
   const rows = records.value.map((record) => {
     const signedQuarter = getFiscalQuarter(record.signedMonth)
@@ -385,12 +367,11 @@ function exportCsv() {
       multiplierSummary(signedQuarter.key, multiplier),
       finalCommissionFor(record),
       record.signedAtText,
-      JSON.stringify(record.amountDebug || {}),
-      JSON.stringify(record.signatureDebug || {}),
+      amountDebugText(record.amountDebug),
     ]
   })
   const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')
-  downloadFile('saiens-bonus-records.csv', `\ufeff${csv}`, 'text/csv;charset=utf-8')
+  downloadFile('saiens-bonus-records.csv', `﻿${csv}`, 'text/csv;charset=utf-8')
 }
 
 function summarize() {
@@ -438,39 +419,6 @@ function ensureSummary(map: Map<string, QuarterSummary>, quarter: QuarterInfo) {
   if (!map.has(quarter.key)) {
     map.set(quarter.key, { ...quarter, count: 0, final: 0, base: 0, taxExcludedAmount: 0 })
   }
-}
-
-function getFiscalQuarter(monthString: string): QuarterInfo {
-  if (!/^\d{4}-\d{2}$/.test(String(monthString || '')))
-    return { year: 0, quarter: '', key: '', range: '', order: 0 }
-  const [yearText, monthText] = monthString.split('-')
-  const rawYear = Number(yearText)
-  const month = Number(monthText)
-  let year = rawYear
-  let quarter: Quarter
-  if ([2, 3, 4].includes(month)) quarter = 'Q1'
-  else if ([5, 6, 7].includes(month)) quarter = 'Q2'
-  else if ([8, 9, 10].includes(month)) quarter = 'Q3'
-  else {
-    quarter = 'Q4'
-    if (month === 1) year = rawYear - 1
-  }
-  return {
-    year,
-    quarter,
-    key: `${year}-${quarter}`,
-    range: quarterRange(year, quarter),
-    order: year * 10 + Number(quarter.slice(1)),
-  }
-}
-
-function quarterRange(year: number, quarter: Quarter) {
-  return {
-    Q1: `${year}/02-${year}/04`,
-    Q2: `${year}/05-${year}/07`,
-    Q3: `${year}/08-${year}/10`,
-    Q4: `${year}/11-${year + 1}/01`,
-  }[quarter]
 }
 
 function loadRecords() {
@@ -558,7 +506,12 @@ function amountDebugText(debug: Record<string, unknown> = {}) {
 }
 
 function canonicalUrl(value: unknown) {
-  return String(value || '').trim()
+  try {
+    const u = new URL(String(value || '').trim())
+    return (u.hostname + u.pathname).replace(/\/+$/, '')
+  } catch {
+    return String(value || '').trim()
+  }
 }
 
 function currentMonth() {
@@ -729,10 +682,19 @@ npm start
     <section class="panel">
       <div class="section-head">
         <h2>季度倍率設定</h2>
-        <button class="secondary" type="button" @click="addMultiplierYear">新增年份</button>
+        <div class="tool-row">
+          <input
+            v-model="newYear"
+            type="text"
+            placeholder="YYYY"
+            style="width: 90px"
+            @keydown.enter="commitAddYear"
+          />
+          <button class="secondary" type="button" @click="commitAddYear">新增年份</button>
+        </div>
       </div>
       <div v-if="multiplierYears.length === 0" class="empty">
-        尚無年份設定。新增報價單後會依回簽季度自動出現，也可按「新增年份」。
+        尚無年份設定。新增報價單後會依回簽季度自動出現，也可輸入年份按「新增年份」。
       </div>
       <div v-for="year in multiplierYears" v-else :key="year" class="year-block">
         <h3>{{ year }}</h3>

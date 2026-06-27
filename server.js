@@ -559,41 +559,29 @@ function buildSignatureCandidate({ index, messageText, attachmentText, hrefs, or
 function extractPostedDate(value) {
   const text = normalizeText(value)
   const patterns = [
-    /(?:發表於\s*)?(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*(上午|下午)?\s*(\d{1,2})?:?(\d{2})?/,
-    /(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})/,
-    /(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{2})/,
+    /(?:發表於\s*)?(?<year>\d{4})\s*年\s*(?<month>\d{1,2})\s*月\s*(?<day>\d{1,2})\s*日(?:\s*(?<meridiem>上午|下午))?\s*(?<hour>\d{1,2})?:?(?<minute>\d{2})?/,
+    /(?<year>\d{4})\/(?<month>\d{1,2})\/(?<day>\d{1,2})\s+(?<hour>\d{1,2}):(?<minute>\d{2})/,
+    /(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})\s+(?<hour>\d{1,2}):(?<minute>\d{2})/,
   ]
   for (const pattern of patterns) {
     const match = text.match(pattern)
-    if (!match) continue
-    let year
-    let month
-    let day
-    let hour = 0
-    let minute = 0
-    let meridiem = ''
-    if (pattern === patterns[0]) {
-      year = Number(match[1])
-      month = Number(match[2])
-      day = Number(match[3])
-      meridiem = match[4] || ''
-      hour = Number(match[5] || 0)
-      minute = Number(match[6] || 0)
-    } else {
-      year = Number(match[1])
-      month = Number(match[2])
-      day = Number(match[3])
-      hour = Number(match[4] || 0)
-      minute = Number(match[5] || 0)
-    }
-    if (meridiem === '下午' && hour > 0 && hour < 12) hour += 12
-    if (meridiem === '上午' && hour === 12) hour = 0
-    const signedMonth = `${year}-${String(month).padStart(2, '0')}`
+    if (!match?.groups) continue
+    const { year, month, day, meridiem = '', hour = '0', minute = '0' } = match.groups
+    let h = Number(hour)
+    if (meridiem === '下午' && h > 0 && h < 12) h += 12
+    if (meridiem === '上午' && h === 12) h = 0
+    const signedMonth = `${year}-${String(Number(month)).padStart(2, '0')}`
     const dateText = match[0].replace(/\s+/g, ' ').trim()
     return {
       signedAtText: buildSignedAtText(text, dateText),
       signedMonth,
-      timestamp: new Date(year, month - 1, day, hour, minute).getTime(),
+      timestamp: new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        h,
+        Number(minute),
+      ).getTime(),
     }
   }
   return { signedAtText: '', signedMonth: '', timestamp: 0 }
@@ -624,6 +612,7 @@ function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+// mirrors src/shared/fiscalQuarter.ts — keep in sync
 function getFiscalQuarter(monthString) {
   if (!/^\d{4}-\d{2}$/.test(String(monthString || ''))) return { year: 0, quarter: '', key: '' }
   const [yearText, monthText] = monthString.split('-')
