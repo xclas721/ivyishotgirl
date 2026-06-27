@@ -2,32 +2,8 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getFiscalQuarter } from '@/shared/fiscalQuarter'
 import type { Quarter, QuarterInfo } from '@/shared/fiscalQuarter'
-
-type CustomerType = 'company' | 'personal' | 'unknown'
-
-interface QuarterMultiplier {
-  rocket: number
-  repurchase: number
-  avgOrder: number
-  yieldRate: number
-}
-
-interface BonusRecord {
-  id: string
-  quoteUrl: string
-  orderNo: string
-  customerName: string
-  customerType: CustomerType
-  taxExcludedAmount: number
-  taxIncludedAmount: number
-  signedMonth: string
-  paidMonth: string
-  baseCommissionRate: number
-  amountInferred: boolean
-  amountDebug: Record<string, unknown>
-  signedAtText: string
-  updatedAt: string
-}
+import * as db from '@/lib/db'
+import type { BonusRecord, CustomerType, QuarterMultiplier } from '@/lib/db'
 
 interface QuoteResponse {
   quoteUrl?: string
@@ -51,8 +27,6 @@ interface QuarterSummary extends QuarterInfo {
   taxExcludedAmount: number
 }
 
-const recordsKey = 'saiens-bonus-records-node-proxy-v2'
-const multipliersKey = 'saiens-bonus-quarter-multipliers-v1'
 const multiplierFields: (keyof QuarterMultiplier)[] = [
   'rocket',
   'repurchase',
@@ -78,10 +52,12 @@ const paidMonth = ref(currentMonth())
 const newYear = ref('')
 const status = reactive({ message: '', tone: '' })
 const isFetching = ref(false)
+const isLoading = ref(true)
+const dbError = ref('')
 const apiOk = ref(false)
 const importFile = ref<HTMLInputElement | null>(null)
-const records = ref<BonusRecord[]>(loadRecords())
-const quarterMultipliers = ref<Record<string, QuarterMultiplier>>(loadMultipliers())
+const records = ref<BonusRecord[]>([])
+const quarterMultipliers = ref<Record<string, QuarterMultiplier>>({})
 
 const isFileMode = computed(() => window.location.protocol === 'file:')
 const multiplierYears = computed(() => {
@@ -98,13 +74,31 @@ const multiplierYears = computed(() => {
 })
 const summary = computed(() => summarize())
 
-onMounted(() => {
-  if (isFileMode.value) {
+onMounted(async () => {
+  isLoading.value = true
+  if (!isFileMode.value) {
+    try {
+      const [recs, mults] = await Promise.all([db.fetchRecords(), db.fetchMultipliers()])
+      records.value = recs
+      quarterMultipliers.value = mults
+    } catch (err) {
+      console.error('[db] load failed', err)
+      dbError.value = '無法讀取資料庫，請確認 Supabase 設定（.env.local）正確。'
+      showStatus('資料庫讀取失敗。', 'error')
+    }
+    void checkApiHealth()
+  } else {
     showStatus('請先用 http://localhost:3000 開啟後再抓取報價單。', '')
-    return
   }
-  void checkApiHealth()
+  isLoading.value = false
 })
+
+function persistToDb(fn: () => Promise<void>) {
+  fn().catch((err) => {
+    console.error('[db]', err)
+    dbError.value = '資料同步失敗，請確認網路連線。'
+  })
+}
 
 async function checkApiHealth() {
   try {
@@ -197,14 +191,15 @@ async function fetchQuote() {
 function upsertRecord(record: BonusRecord) {
   const normalized = normalizeRecord(record)
   if (!normalized) return
-  ensureMultiplier(getFiscalQuarter(normalized.signedMonth).key)
+  const qKey = getFiscalQuarter(normalized.signedMonth).key
+  const isNewKey = ensureMultiplier(qKey)
   const index = records.value.findIndex(
     (item) => canonicalUrl(item.quoteUrl) === canonicalUrl(normalized.quoteUrl),
   )
   if (index >= 0) records.value[index] = { ...records.value[index], ...normalized }
   else records.value.push(normalized)
-  saveRecords()
-  saveMultipliers()
+  persistToDb(() => db.upsertRecord(normalized))
+  if (qKey && isNewKey) persistToDb(() => db.upsertMultiplier(qKey, quarterMultipliers.value[qKey] ?? defaultMultiplier()))
 }
 
 function normalizeRecord(record: Partial<BonusRecord>): BonusRecord | null {
@@ -229,9 +224,11 @@ function normalizeRecord(record: Partial<BonusRecord>): BonusRecord | null {
   }
 }
 
-function ensureMultiplier(key: string) {
-  if (!key) return
-  quarterMultipliers.value[key] = normalizeMultiplier(quarterMultipliers.value[key])
+function ensureMultiplier(key: string): boolean {
+  if (!key) return false
+  if (quarterMultipliers.value[key]) return false
+  quarterMultipliers.value[key] = normalizeMultiplier()
+  return true
 }
 
 function multiplierFor(key: string): QuarterMultiplier {
@@ -244,16 +241,19 @@ function updateMultiplier(key: string, field: keyof QuarterMultiplier, value: st
   const multiplier = quarterMultipliers.value[key] || defaultMultiplier()
   multiplier[field] = Math.max(0, toNumber(value))
   quarterMultipliers.value[key] = multiplier
-  saveMultipliers()
+  persistToDb(() => db.upsertMultiplier(key, multiplier))
 }
 
 function commitAddYear() {
   const year = newYear.value.trim()
   if (!/^\d{4}$/.test(year)) return showStatus('年份格式需為 YYYY。', 'error')
-  ;(['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]).forEach((quarter) =>
-    ensureMultiplier(`${year}-${quarter}`),
-  )
-  saveMultipliers()
+  const newMults: Record<string, QuarterMultiplier> = {}
+  ;(['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]).forEach((quarter) => {
+    const key = `${year}-${quarter}`
+    ensureMultiplier(key)
+    newMults[key] = quarterMultipliers.value[key] ?? defaultMultiplier()
+  })
+  persistToDb(() => db.upsertMultipliers(newMults))
   showStatus(`已新增 ${year} 年 Q1-Q4 倍率設定。`, 'ok')
   newYear.value = ''
 }
@@ -264,24 +264,27 @@ function updateRecord(record: BonusRecord, field: keyof BonusRecord, value: stri
   } else {
     ;(record[field] as string) = String(value)
   }
-  if (field === 'signedMonth') ensureMultiplier(getFiscalQuarter(record.signedMonth).key)
+  if (field === 'signedMonth') {
+    const qKey = getFiscalQuarter(record.signedMonth).key
+    const isNewKey = ensureMultiplier(qKey)
+    if (qKey && isNewKey) persistToDb(() => db.upsertMultiplier(qKey, quarterMultipliers.value[qKey] ?? defaultMultiplier()))
+  }
   record.updatedAt = new Date().toISOString()
-  saveRecords()
-  saveMultipliers()
+  persistToDb(() => db.upsertRecord(record))
 }
 
 function deleteRecord(id: string) {
   if (!confirm('確定刪除這筆紀錄？')) return
   records.value = records.value.filter((record) => record.id !== id)
-  saveRecords()
+  persistToDb(() => db.deleteRecord(id))
 }
 
 function clearRecords() {
   if (!confirm('確定清空全部紀錄與季度倍率設定？')) return
   records.value = []
   quarterMultipliers.value = {}
-  saveRecords()
-  saveMultipliers()
+  persistToDb(() => db.clearAllRecords())
+  persistToDb(() => db.clearAllMultipliers())
   showStatus('已清空紀錄。', 'ok')
 }
 
@@ -322,8 +325,8 @@ async function importJson(event: Event) {
         ...normalizeMultipliers(parsed.quarterMultipliers),
       }
     }
-    saveRecords()
-    saveMultipliers()
+    persistToDb(() => db.upsertRecords(records.value))
+    persistToDb(() => db.upsertMultipliers(quarterMultipliers.value))
     showStatus('JSON 已匯入。', 'ok')
   } catch (error) {
     showStatus((error as Error).message || '匯入 JSON 失敗。', 'error')
@@ -419,38 +422,6 @@ function ensureSummary(map: Map<string, QuarterSummary>, quarter: QuarterInfo) {
   if (!map.has(quarter.key)) {
     map.set(quarter.key, { ...quarter, count: 0, final: 0, base: 0, taxExcludedAmount: 0 })
   }
-}
-
-function loadRecords() {
-  try {
-    const parsed = JSON.parse(
-      localStorage.getItem(recordsKey) ||
-        localStorage.getItem('saiens-bonus-records-node-proxy-v1') ||
-        '[]',
-    )
-    return Array.isArray(parsed)
-      ? parsed.map(normalizeRecord).filter((record): record is BonusRecord => Boolean(record))
-      : []
-  } catch {
-    return []
-  }
-}
-
-function loadMultipliers() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(multipliersKey) || '{}')
-    return parsed && typeof parsed === 'object' ? normalizeMultipliers(parsed) : {}
-  } catch {
-    return {}
-  }
-}
-
-function saveRecords() {
-  localStorage.setItem(recordsKey, JSON.stringify(records.value))
-}
-
-function saveMultipliers() {
-  localStorage.setItem(multipliersKey, JSON.stringify(quarterMultipliers.value))
 }
 
 function defaultMultiplier(): QuarterMultiplier {
@@ -598,6 +569,11 @@ function downloadFile(filename: string, content: string, type: string) {
 
 <template>
   <main class="app-shell">
+    <div v-if="isLoading" class="db-loading">資料讀取中…</div>
+    <div v-if="dbError" class="db-error-banner">
+      {{ dbError }}
+      <button type="button" class="db-error-close" @click="dbError = ''">×</button>
+    </div>
     <header class="page-head">
       <div>
         <h1>季度獎金帳本</h1>
@@ -635,7 +611,7 @@ npm start
           收款月份
           <input v-model="paidMonth" type="month" />
         </label>
-        <button type="button" :disabled="isFetching || isFileMode" @click="fetchQuote">
+        <button type="button" :disabled="isFetching || isFileMode || isLoading" @click="fetchQuote">
           {{ isFetching ? '抓取中...' : '抓取報價單' }}
         </button>
       </div>
