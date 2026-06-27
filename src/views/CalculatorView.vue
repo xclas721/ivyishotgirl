@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { ExternalLink } from 'lucide-vue-next'
 import { getFiscalQuarter } from '@/shared/fiscalQuarter'
 import type { QuarterInfo } from '@/shared/fiscalQuarter'
 import type { BonusRecord, CustomerType } from '@/lib/db'
@@ -17,8 +18,10 @@ import {
   multiplierFor,
   defaultMultiplier,
   isDefaultMultiplier,
+  formatNumber,
   formatMultiplier,
   multiplierSummary,
+  combinedMultiplier,
   toNumber,
   canonicalUrl,
   currentMonth,
@@ -90,8 +93,10 @@ async function checkApiHealth() {
     apiOk.value = true
     console.log('API OK')
   } catch (error) {
-    console.error(error)
-    showStatus(`API 連線失敗：${networkDiagnostic(error)}`, 'error')
+    // Surface this quietly: the real error is shown when the user actually
+    // tries to fetch a quote. Avoid a red banner on page load.
+    apiOk.value = false
+    console.error('[api] health check failed:', networkDiagnostic(error))
   }
 }
 
@@ -431,7 +436,7 @@ function downloadFile(filename: string, content: string, type: string) {
           回簽月份決定獎金%與倍率，收款月份決定實際發放季度。金額以報價單「未連稅金額」與「總計」為準。
         </p>
       </div>
-      <span class="badge" :class="{ ok: apiOk }">{{ apiOk ? 'API ready' : 'Vue + Express' }}</span>
+      <span v-if="apiOk" class="badge ok">API 已連線</span>
     </header>
 
     <section class="panel">
@@ -556,7 +561,6 @@ npm start
         <table>
           <thead>
             <tr>
-              <th>報價單網址</th>
               <th>案件編號</th>
               <th>客戶名稱</th>
               <th>客戶類型</th>
@@ -567,7 +571,7 @@ npm start
               <th>未連稅金額</th>
               <th>總計</th>
               <th>基礎獎金%</th>
-              <th>套用倍率摘要</th>
+              <th>套用倍率</th>
               <th>最終獎金</th>
               <th>操作</th>
             </tr>
@@ -579,18 +583,20 @@ npm start
               )"
               :key="record.id"
             >
-              <td class="url-cell">
-                <a :href="record.quoteUrl" target="_blank" rel="noreferrer">{{
-                  record.quoteUrl
-                }}</a>
+              <td class="order-cell">
+                <a
+                  v-if="record.quoteUrl"
+                  :href="record.quoteUrl"
+                  target="_blank"
+                  rel="noreferrer"
+                  :title="record.quoteUrl"
+                >
+                  {{ record.orderNo || '報價單' }}
+                  <ExternalLink :size="12" :stroke-width="2" />
+                </a>
+                <span v-else>{{ record.orderNo || '-' }}</span>
               </td>
-              <td>{{ record.orderNo || '-' }}</td>
-              <td>
-                {{ record.customerName || '-' }}
-                <div v-if="amountDebugText(record.amountDebug)" class="hint">
-                  {{ amountDebugText(record.amountDebug) }}
-                </div>
-              </td>
+              <td>{{ record.customerName || '-' }}</td>
               <td>
                 <span class="type-pill" :class="{ unknown: record.customerType === 'unknown' }">{{
                   customerTypeLabel(record.customerType)
@@ -664,21 +670,28 @@ npm start
                   "
                 />
               </td>
-              <td>
-                {{
-                  multiplierSummary(
-                    getFiscalQuarter(record.signedMonth).key,
-                    multiplierFor(getFiscalQuarter(record.signedMonth).key),
-                  )
-                }}
+              <td class="mult-cell">
+                <span
+                  :title="
+                    multiplierSummary(
+                      getFiscalQuarter(record.signedMonth).key,
+                      multiplierFor(getFiscalQuarter(record.signedMonth).key),
+                    )
+                  "
+                  >×{{
+                    formatNumber(
+                      combinedMultiplier(multiplierFor(getFiscalQuarter(record.signedMonth).key)),
+                    )
+                  }}</span
+                >
                 <div
                   v-if="
                     getFiscalQuarter(record.signedMonth).key &&
                     isDefaultMultiplier(multiplierFor(getFiscalQuarter(record.signedMonth).key))
                   "
-                  class="status error"
+                  class="hint"
                 >
-                  尚未設定該季度倍率，暫以 1 計算
+                  尚未設定，暫以 1
                 </div>
               </td>
               <td class="bonus">{{ money.format(finalCommissionFor(record)) }}</td>

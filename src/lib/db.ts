@@ -54,7 +54,9 @@ function rowToRecord(row: Record<string, unknown>): BonusRecord {
     quoteUrl: String(row.quote_url ?? ''),
     orderNo: String(row.order_no ?? ''),
     customerName: String(row.customer_name ?? ''),
-    customerType: (['company', 'personal', 'unknown'].includes(ct) ? ct : 'unknown') as CustomerType,
+    customerType: (['company', 'personal', 'unknown'].includes(ct)
+      ? ct
+      : 'unknown') as CustomerType,
     taxExcludedAmount: Number(row.tax_excluded_amount ?? 0),
     taxIncludedAmount: Number(row.tax_included_amount ?? 0),
     signedMonth: String(row.signed_month ?? ''),
@@ -132,12 +134,12 @@ export async function upsertMultiplier(key: string, m: QuarterMultiplier): Promi
   if (error) throw error
 }
 
-export async function upsertMultipliers(multipliers: Record<string, QuarterMultiplier>): Promise<void> {
+export async function upsertMultipliers(
+  multipliers: Record<string, QuarterMultiplier>,
+): Promise<void> {
   const rows = Object.entries(multipliers).map(([key, m]) => multiplierToRow(key, m))
   if (!rows.length) return
-  const { error } = await supabase
-    .from('quarter_multipliers')
-    .upsert(rows, { onConflict: 'key' })
+  const { error } = await supabase.from('quarter_multipliers').upsert(rows, { onConflict: 'key' })
   if (error) throw error
 }
 

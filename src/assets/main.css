@@ -696,7 +696,7 @@
 
   table {
     width: 100%;
-    min-width: 1520px;
+    min-width: 1180px;
     border-collapse: separate;
     border-spacing: 0;
     border: 1px solid rgba(0, 0, 0, 0.06);
@@ -750,14 +750,46 @@
     font-variant-numeric: tabular-nums;
   }
 
-  td.url-cell {
-    max-width: 200px;
-    overflow-wrap: anywhere;
+  td.mult-cell {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  td.order-cell a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-copper);
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  td.order-cell a:hover {
+    text-decoration: underline;
+  }
+
+  /* Keep the action buttons pinned to the right edge while the wide table
+     scrolls horizontally, so 再同步 / 刪除 stay reachable. */
+  th:last-child,
+  td.actions-cell {
+    position: sticky;
+    right: 0;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  th:last-child {
+    background: #f3f2ef;
+    z-index: 1;
   }
 
   td.actions-cell {
-    white-space: nowrap;
-    text-align: right;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: -8px 0 12px -8px rgba(0, 0, 0, 0.14);
+  }
+
+  tr:hover td.actions-cell {
+    background: rgba(255, 255, 255, 0.98);
   }
 
   td.actions-cell button + button {

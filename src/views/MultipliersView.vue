@@ -58,7 +58,7 @@ function commitAddYear() {
 
     <section class="panel">
       <div class="section-head">
-        <h2>季度倍率設定</h2>
+        <h2>各季度倍率</h2>
         <div class="tool-row">
           <input
             v-model="newYear"

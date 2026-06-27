@@ -100,6 +100,17 @@ export function multiplierSummary(key: string, multiplier: QuarterMultiplier) {
   return `${key || '未選回簽季度'}：${formatMultiplier(multiplier)}`
 }
 
+// The four multipliers collapsed into a single factor (rocket × repurchase × …),
+// used for a compact table display.
+export function combinedMultiplier(multiplier: QuarterMultiplier) {
+  return (
+    (multiplier.rocket || 1) *
+    (multiplier.repurchase || 1) *
+    (multiplier.avgOrder || 1) *
+    (multiplier.yieldRate || 1)
+  )
+}
+
 export function isDefaultMultiplier(multiplier: QuarterMultiplier) {
   return (
     multiplier.rocket === 1 &&
@@ -199,7 +210,9 @@ export function upsertRecord(record: BonusRecord) {
   else records.value.push(normalized)
   persistToDb(() => db.upsertRecord(normalized))
   if (qKey && isNewKey)
-    persistToDb(() => db.upsertMultiplier(qKey, quarterMultipliers.value[qKey] ?? defaultMultiplier()))
+    persistToDb(() =>
+      db.upsertMultiplier(qKey, quarterMultipliers.value[qKey] ?? defaultMultiplier()),
+    )
 }
 
 export function updateRecord(
