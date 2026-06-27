@@ -254,7 +254,6 @@ function ensureMultiplier(key: string) {
 
 function multiplierFor(key: string): QuarterMultiplier {
   if (!key) return defaultMultiplier()
-  ensureMultiplier(key)
   return quarterMultipliers.value[key] || defaultMultiplier()
 }
 
