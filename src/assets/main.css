@@ -646,6 +646,26 @@
     box-shadow: 0 1px 0 rgba(168, 113, 46, 0.12);
   }
 
+  .ledger-tab-head {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .ledger-tab-icon {
+    flex-shrink: 0;
+  }
+
+  .ledger-tab-icon--on {
+    color: var(--color-copper);
+  }
+
+  .ledger-tab-icon--off {
+    color: var(--color-muted);
+    opacity: 0.5;
+  }
+
   .ledger-tab-label {
     font-size: 13px;
     font-weight: 600;

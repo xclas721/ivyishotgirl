@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Eye, EyeOff } from 'lucide-vue-next'
+
 export type LedgerTabId = 'overview' | 'records' | 'signed' | 'paid'
 
 const model = defineModel<LedgerTabId[]>({ required: true })
@@ -33,9 +35,26 @@ function toggleTab(id: LedgerTabId) {
       class="ledger-tab"
       :class="{ 'is-active': isActive(tab.id) }"
       :aria-selected="isActive(tab.id)"
+      :aria-label="`${tab.label}${isActive(tab.id) ? '，已顯示' : '，已隱藏'}`"
       @click="toggleTab(tab.id)"
     >
-      <span class="ledger-tab-label">{{ tab.label }}</span>
+      <span class="ledger-tab-head">
+        <Eye
+          v-if="isActive(tab.id)"
+          class="ledger-tab-icon ledger-tab-icon--on"
+          :size="14"
+          :stroke-width="2"
+          aria-hidden="true"
+        />
+        <EyeOff
+          v-else
+          class="ledger-tab-icon ledger-tab-icon--off"
+          :size="14"
+          :stroke-width="2"
+          aria-hidden="true"
+        />
+        <span class="ledger-tab-label">{{ tab.label }}</span>
+      </span>
       <span class="ledger-tab-hint">{{ tab.hint }}</span>
     </button>
   </nav>
