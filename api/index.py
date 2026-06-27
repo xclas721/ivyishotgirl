@@ -305,17 +305,108 @@ def parse_amount(raw: str) -> int:
 # ── Signature extraction ──────────────────────────────────────────────────────
 
 
+def find_signed_date_near_signature(text: str) -> dict:
+    """
+    Primary extraction: scan full-page text for a date near a signature event.
+    Structure-agnostic — works regardless of HTML class names or page layout.
+
+    In Odoo the chatter shows:
+        發表於 2024年 3月 15日 上午 10:30
+        訂單由 張先生 簽名。
+    The date always appears within ~500 chars before the signature text.
+    """
+    # Anchors ordered strongest → weakest
+    sig_re = re.compile(
+        r"訂單由[\s\S]{0,120}?簽名"  # "Order signed by [name]" — strongest
+        r"|已簽(?:名|署)"
+        r"|客戶簽名"
+        r"|簽名",
+        re.I,
+    )
+    date_patterns = [
+        # Chinese format: 2024年3月15日 (+ optional time)
+        re.compile(
+            r"(?P<year>\d{4})\s*年\s*(?P<month>\d{1,2})\s*月\s*(?P<day>\d{1,2})\s*日"
+            r"(?:[^\n]{0,80}(?P<meridiem>上午|下午)?\s*(?P<hour>\d{1,2}):(?P<minute>\d{2}))?"
+        ),
+        # Slash format: 2024/03/15 10:30
+        re.compile(
+            r"(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})"
+            r"(?:\s+(?P<hour>\d{1,2}):(?P<minute>\d{2}))?"
+        ),
+    ]
+
+    for sig_m in sig_re.finditer(text):
+        sig_text = re.sub(r"\s+", " ", sig_m.group()).strip()
+        # Date appears BEFORE the signature text in Odoo — look in prior 500 chars
+        before = text[max(0, sig_m.start() - 500) : sig_m.start()]
+
+        for dpat in date_patterns:
+            all_matches = list(dpat.finditer(before))
+            if not all_matches:
+                continue
+            dm = all_matches[-1]  # last (closest) date before the signature
+            g = dm.groupdict()
+            year = int(g["year"])
+            month = int(g["month"])
+            day = int(g.get("day") or 1)
+            if not (2020 <= year <= 2040 and 1 <= month <= 12):
+                continue
+
+            meridiem = g.get("meridiem") or ""
+            hour = int(g.get("hour") or 0)
+            minute = int(g.get("minute") or 0)
+            if meridiem == "下午" and 0 < hour < 12:
+                hour += 12
+            if meridiem == "上午" and hour == 12:
+                hour = 0
+
+            date_text = re.sub(r"\s+", " ", dm.group()).strip()
+            try:
+                ts = int(datetime(year, month, day, hour, minute).timestamp() * 1000)
+            except ValueError:
+                ts = 0
+
+            return {
+                "signed_month": f"{year}-{month:02d}",
+                "signed_at_text": f"{date_text} {sig_text}".strip(),
+                "timestamp": ts,
+                "matched_by": "direct-text-search",
+            }
+
+    return {"signed_month": "", "signed_at_text": "", "timestamp": 0, "matched_by": ""}
+
+
 def extract_signature_info(html: str, text: str, order_no: str) -> dict:
+    # ── Pass 1: structure-agnostic full-text search (most reliable) ──────────
+    direct = find_signed_date_near_signature(text)
+    if direct["signed_month"]:
+        return {
+            "signed_at_text": direct["signed_at_text"],
+            "signed_month": direct["signed_month"],
+            "signed_quarter_key": get_fiscal_quarter(direct["signed_month"])["key"],
+            "signature_debug": {
+                "matchedBy": direct["matched_by"],
+                "matchedMessageText": direct["signed_at_text"],
+                "matchedAttachmentText": "",
+                "candidates": [],
+            },
+        }
+
+    # ── Pass 2: DOM-based search — Odoo message container fallback ───────────
     soup = BeautifulSoup(html, "html.parser")
     containers = collect_message_containers(soup)
-
     candidates = (
         [message_candidate_from_element(el, idx, order_no) for idx, el in enumerate(containers)]
         if containers
         else fallback_message_candidates(text, order_no)
     )
 
-    viable = [c for c in candidates if c["has_signature"] and c["has_pdf"] and c["signed_month"]]
+    # Prefer: has_signature + signed_month (PDF no longer required)
+    viable = [c for c in candidates if c["has_signature"] and c["signed_month"]]
+    if not viable:
+        # Fallback: any candidate that found a date
+        viable = [c for c in candidates if c["signed_month"]]
     viable.sort(key=lambda c: (c["score"], c["timestamp"]), reverse=True)
     selected = viable[0] if viable else None
 
@@ -407,13 +498,13 @@ def build_signature_candidate(*, index, message_text, attachment_text, hrefs, or
 
     score = 0
     if has_signature:
-        score += 20
+        score += 15
     if has_pdf:
-        score += 20
+        score += 10  # present = bonus, absent = not penalised
     if has_order_no:
         score += 40
     if strong_signature:
-        score += 15
+        score += 25  # "訂單由...簽名" is the definitive event
     if date["signed_month"]:
         score += 10
 
