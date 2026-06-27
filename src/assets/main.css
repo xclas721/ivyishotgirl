@@ -145,6 +145,7 @@
   label {
     display: grid;
     gap: 6px;
+    min-width: 0; /* allow shrinking when used as grid item */
     color: var(--color-muted);
     font-size: 13px;
     font-weight: 500;
@@ -152,6 +153,7 @@
 
   input {
     width: 100%;
+    min-width: 0; /* allow shrinking inside grid/flex containers */
     min-height: 40px;
     border: 1px solid var(--color-border);
     border-radius: 6px;
@@ -258,9 +260,9 @@
   }
 
   .site-main {
+    min-width: 0; /* grid item: prevent 1fr track from expanding past viewport */
     min-height: 100vh;
     background: var(--color-bg);
-    overflow-x: hidden;
   }
 
   /* ≤768px: sidebar collapses to a top bar */
@@ -361,6 +363,7 @@
 
   /* Panel */
   .panel {
+    min-width: 0; /* grid item: allow shrinking below content min-width (e.g. 1520px table) */
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 10px;
