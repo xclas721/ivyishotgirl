@@ -43,6 +43,7 @@ interface QuoteResponse {
 
 interface QuarterSummary extends QuarterInfo {
   count: number
+  computableCount: number
   final: number
   base: number
   taxExcludedAmount: number
@@ -296,13 +297,17 @@ function exportCsv() {
 function summarize() {
   const signed = new Map<string, QuarterSummary>()
   const paid = new Map<string, QuarterSummary>()
-  const totals = { final: 0, taxExcludedAmount: 0, taxIncludedAmount: 0 }
+  const totals = { final: 0, taxExcludedAmount: 0, taxIncludedAmount: 0, uncomputableCount: 0 }
 
   records.value.forEach((record) => {
-    const final = finalCommissionFor(record)
     const signedQuarter = getFiscalQuarter(record.signedMonth)
     const paidQuarter = getFiscalQuarter(record.paidMonth)
-    totals.final += final
+    // Pre-cutoff quarters have no multiplier system, so the final bonus is
+    // uncomputable here — exclude it from every bonus total.
+    const computable = multipliersApply(signedQuarter.key)
+    const final = computable ? finalCommissionFor(record) : 0
+    if (computable) totals.final += final
+    else totals.uncomputableCount += 1
     totals.taxExcludedAmount += toNumber(record.taxExcludedAmount)
     totals.taxIncludedAmount += toNumber(record.taxIncludedAmount)
 
@@ -313,7 +318,10 @@ function summarize() {
         item.count += 1
         item.taxExcludedAmount += toNumber(record.taxExcludedAmount)
         item.base += baseCommissionFor(record)
-        item.final += final
+        if (computable) {
+          item.computableCount += 1
+          item.final += final
+        }
       }
     }
 
@@ -322,7 +330,10 @@ function summarize() {
       const item = paid.get(paidQuarter.key)
       if (item) {
         item.count += 1
-        item.final += final
+        if (computable) {
+          item.computableCount += 1
+          item.final += final
+        }
       }
     }
   })
@@ -336,7 +347,14 @@ function summarize() {
 
 function ensureSummary(map: Map<string, QuarterSummary>, quarter: QuarterInfo) {
   if (!map.has(quarter.key)) {
-    map.set(quarter.key, { ...quarter, count: 0, final: 0, base: 0, taxExcludedAmount: 0 })
+    map.set(quarter.key, {
+      ...quarter,
+      count: 0,
+      computableCount: 0,
+      final: 0,
+      base: 0,
+      taxExcludedAmount: 0,
+    })
   }
 }
 
@@ -488,6 +506,9 @@ npm start
         <div class="total primary">
           <span>發放總獎金</span>
           <strong>{{ money.format(summary.totals.final) }}</strong>
+          <small v-if="summary.totals.uncomputableCount > 0" class="total-note">
+            未含 {{ summary.totals.uncomputableCount }} 筆無倍率季度（無法計算）
+          </small>
         </div>
         <div class="total">
           <span>簽約未連稅金額</span>
@@ -514,7 +535,9 @@ npm start
               <h3>{{ item.key }}</h3>
               <p>{{ item.range }}，{{ item.count }} 筆回簽</p>
             </div>
-            <strong>{{ money.format(item.final) }}</strong>
+            <strong>{{
+              multipliersApply(item.key) ? money.format(item.final) : '無法計算'
+            }}</strong>
           </header>
           <div class="quarter-lines">
             <div>
@@ -530,7 +553,8 @@ npm start
               }}</b>
             </div>
             <div>
-              <span>應計獎金試算</span><b>{{ money.format(item.final) }}</b>
+              <span>應計獎金試算</span
+              ><b>{{ multipliersApply(item.key) ? money.format(item.final) : '無法計算' }}</b>
             </div>
           </div>
         </article>
@@ -547,11 +571,15 @@ npm start
               <h3>{{ item.key }}</h3>
               <p>{{ item.range }}，{{ item.count }} 筆收款</p>
             </div>
-            <strong>{{ money.format(item.final) }}</strong>
+            <strong>{{ item.computableCount > 0 ? money.format(item.final) : '無法計算' }}</strong>
           </header>
           <div class="quarter-lines">
             <div>
-              <span>實際領取獎金總額</span><b>{{ money.format(item.final) }}</b>
+              <span>實際領取獎金總額</span
+              ><b>{{ item.computableCount > 0 ? money.format(item.final) : '無法計算' }}</b>
+            </div>
+            <div v-if="item.count > item.computableCount" class="hint">
+              其中 {{ item.count - item.computableCount }} 筆為無倍率季度（未計入）
             </div>
           </div>
         </article>
@@ -702,7 +730,12 @@ npm start
                 </template>
                 <span v-else class="muted-cell">無倍率</span>
               </td>
-              <td class="bonus">{{ money.format(finalCommissionFor(record)) }}</td>
+              <td class="bonus">
+                <template v-if="multipliersApply(getFiscalQuarter(record.signedMonth).key)">
+                  {{ money.format(finalCommissionFor(record)) }}
+                </template>
+                <span v-else class="muted-cell">無法計算</span>
+              </td>
               <td class="actions-cell">
                 <button
                   class="secondary"

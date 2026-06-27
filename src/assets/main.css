@@ -582,6 +582,13 @@
     color: var(--color-copper);
   }
 
+  .total .total-note {
+    margin-top: 6px;
+    color: var(--color-muted);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
   /* Quarter cards */
   .quarter-grid {
     display: grid;
@@ -755,8 +762,9 @@
     font-variant-numeric: tabular-nums;
   }
 
-  td.mult-cell .muted-cell {
+  .muted-cell {
     color: var(--color-muted);
+    font-weight: 400;
   }
 
   .quarter-setting.no-multiplier {
