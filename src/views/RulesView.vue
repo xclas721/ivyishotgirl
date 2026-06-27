@@ -3,7 +3,20 @@
     <header class="page-head">
       <div>
         <h1>AM 業績獎金規則</h1>
-        <p>AM 業績獎金新制 V2 — 依回簽季度計算，發放時間依收款季度。</p>
+        <p>
+          AM 業績獎金新制 V2 — 依回簽季度計算，發放時間依收款季度。本頁為帳本試算摘要，完整制度以官方文件為準。
+        </p>
+      </div>
+      <div class="head-controls">
+        <a
+          class="rules-source-link"
+          :href="COMMISSION_RULES_URL"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <ExternalLink :size="14" :stroke-width="2" />
+          官方制度說明（V2）
+        </a>
       </div>
     </header>
 
@@ -113,6 +126,10 @@
     <section class="panel">
       <h2>注意事項</h2>
       <ul class="rules-list">
+        <li>
+          完整制度說明、倍率區間與實施時程見
+          <a :href="COMMISSION_RULES_URL" target="_blank" rel="noreferrer">AM 業績獎金新制 V2 官方文件</a>。
+        </li>
         <li>獎金以回簽月份決定所屬季度，與收款月份無關。</li>
         <li>收款月份決定發放季度（實際領取時間）。</li>
         <li>同一季度的所有案件共用同一組倍率，倍率為整季一致。</li>
@@ -126,7 +143,9 @@
 </template>
 
 <script setup lang="ts">
-import { TrendingUp, Repeat2, Banknote, Target } from 'lucide-vue-next'
+import { TrendingUp, Repeat2, Banknote, Target, ExternalLink } from 'lucide-vue-next'
+
+const COMMISSION_RULES_URL = 'https://kpi.qsm.group/commission-explain'
 
 const quarters = [
   { key: 'Q1', months: '2 月 – 4 月', note: '（農曆年後啟動）' },
