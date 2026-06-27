@@ -142,15 +142,50 @@ export const multiplierYears = computed(() => {
   return Array.from(years).sort((a, b) => b - a)
 })
 
+function recordMatchesFilter(
+  monthString: string,
+  year: number | 'all',
+  quarter: Quarter | 'all',
+): boolean {
+  const q = getFiscalQuarter(monthString)
+  if (year !== 'all' && q.year !== year) return false
+  if (quarter !== 'all' && q.quarter !== quarter) return false
+  return true
+}
+
 // Records limited to the selected 回簽 year and quarter (or all of them).
 export const visibleRecords = computed(() =>
-  records.value.filter((r) => {
-    const q = getFiscalQuarter(r.signedMonth)
-    if (selectedYear.value !== 'all' && q.year !== selectedYear.value) return false
-    if (selectedQuarter.value !== 'all' && q.quarter !== selectedQuarter.value) return false
-    return true
-  }),
+  records.value.filter((r) =>
+    recordMatchesFilter(r.signedMonth, selectedYear.value, selectedQuarter.value),
+  ),
 )
+
+// Same filter dimensions applied to 收款月份 — used for context-bar 實領 KPI.
+export const paidVisibleRecords = computed(() =>
+  records.value.filter((r) =>
+    recordMatchesFilter(r.paidMonth, selectedYear.value, selectedQuarter.value),
+  ),
+)
+
+const QUARTER_REP_MONTH: Record<Quarter, string> = {
+  Q1: '02',
+  Q2: '05',
+  Q3: '08',
+  Q4: '11',
+}
+
+export const filterContextLabel = computed(() => {
+  if (selectedYear.value === 'all' && selectedQuarter.value === 'all') return '全部季度'
+  if (typeof selectedYear.value === 'number' && selectedQuarter.value !== 'all') {
+    const info = getFiscalQuarter(
+      `${selectedYear.value}-${QUARTER_REP_MONTH[selectedQuarter.value]}`,
+    )
+    return `${info.key} · ${info.range}`
+  }
+  const yearPart = selectedYear.value === 'all' ? '全部年度' : String(selectedYear.value)
+  const quarterPart = selectedQuarter.value === 'all' ? '全部季度' : selectedQuarter.value
+  return `${yearPart} · ${quarterPart}`
+})
 
 // Years offered in the filter — data years plus the current default, so the
 // 預設本季度 year always appears even before any data exists for it.

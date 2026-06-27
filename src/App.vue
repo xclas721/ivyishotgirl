@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import { LayoutDashboard, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
+import QuarterContextBar from '@/components/layout/QuarterContextBar.vue'
 </script>
 
 <template>
@@ -32,6 +33,7 @@ import { LayoutDashboard, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
       </ul>
     </nav>
     <div class="site-main">
+      <QuarterContextBar />
       <RouterView />
     </div>
   </div>

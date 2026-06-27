@@ -1,17 +1,11 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
-import type { Quarter } from '@/shared/fiscalQuarter'
 import type { QuarterMultiplier } from '@/lib/db'
+import DbStatusBanner from '@/components/layout/DbStatusBanner.vue'
 import {
-  dbError,
-  isLoading,
-  multiplierYears,
-  filterYears,
   displayedYears,
   displayedQuarters,
-  selectedYear,
-  selectedQuarter,
   ensureLoaded,
   multiplierFor,
   updateMultiplier,
@@ -48,12 +42,9 @@ function commitAddYear() {
 
 <template>
   <main class="app-shell">
-    <div v-if="isLoading" class="db-loading">資料讀取中…</div>
-    <div v-if="dbError" class="db-error-banner">
-      {{ dbError }}
-      <button type="button" class="db-error-close" @click="dbError = ''">×</button>
-    </div>
-    <header class="page-head">
+    <DbStatusBanner />
+
+    <header class="page-head page-head--compact">
       <div>
         <h1>季度倍率設定</h1>
         <p>
@@ -66,22 +57,6 @@ function commitAddYear() {
       <div class="section-head">
         <h2>各季度倍率</h2>
         <div class="tool-row">
-          <label v-if="filterYears.length" class="year-filter">
-            年度
-            <select v-model="selectedYear">
-              <option value="all">全部</option>
-              <option v-for="year in filterYears" :key="year" :value="year">{{ year }}</option>
-            </select>
-          </label>
-          <label class="year-filter">
-            季度
-            <select v-model="selectedQuarter">
-              <option value="all">全部</option>
-              <option v-for="q in ['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]" :key="q" :value="q">
-                {{ q }}
-              </option>
-            </select>
-          </label>
           <input
             v-model="newYear"
             type="text"

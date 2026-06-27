@@ -1,33 +1,50 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { ExternalLink, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { onMounted, reactive, ref } from 'vue'
 import { getFiscalQuarter, multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
-import type { QuarterInfo, Quarter } from '@/shared/fiscalQuarter'
-import type { BonusRecord, CustomerType } from '@/lib/db'
+import type { CustomerType } from '@/lib/db'
+import type { BonusRecord } from '@/lib/db'
+import DbStatusBanner from '@/components/layout/DbStatusBanner.vue'
+import LedgerTabs from '@/components/ledger/LedgerTabs.vue'
+import type { LedgerTabId } from '@/components/ledger/LedgerTabs.vue'
+import RecordsTable from '@/components/ledger/RecordsTable.vue'
 import {
   records,
   visibleRecords,
   selectedYear,
   selectedQuarter,
-  filterYears,
-  quarterMultipliers,
   isLoading,
-  dbError,
   isFileMode,
   ensureLoaded,
   upsertRecord,
-  updateRecord,
   removeRecord,
   multiplierFor,
-  isDefaultMultiplier,
   formatNumber,
   formatMultiplier,
   multiplierSummary,
   combinedMultiplier,
-  toNumber,
   canonicalUrl,
   currentMonth,
 } from '@/composables/ledger'
+import { finalCommissionFor, ledgerSummary } from '@/composables/ledgerSummary'
+
+const money = new Intl.NumberFormat('zh-TW', {
+  style: 'currency',
+  currency: 'TWD',
+  maximumFractionDigits: 0,
+})
+const integer = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 })
+
+const activeTab = ref<LedgerTabId>('overview')
+const quoteUrl = ref('')
+const signedMonth = ref('')
+const paidMonth = ref(currentMonth())
+const status = reactive({ message: '', tone: '' })
+const isFetching = ref(false)
+const isSyncingAll = ref(false)
+const apiOk = ref(false)
+const syncingIds = ref<Set<string>>(new Set())
+
+const summary = ledgerSummary
 
 interface QuoteResponse {
   quoteUrl?: string
@@ -43,32 +60,6 @@ interface QuoteResponse {
   signedMonth?: string
   signedQuarterKey?: string
 }
-
-interface QuarterSummary extends QuarterInfo {
-  count: number
-  computableCount: number
-  final: number
-  base: number
-  taxExcludedAmount: number
-}
-
-const money = new Intl.NumberFormat('zh-TW', {
-  style: 'currency',
-  currency: 'TWD',
-  maximumFractionDigits: 0,
-})
-const integer = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 })
-
-const quoteUrl = ref('')
-const signedMonth = ref('')
-const paidMonth = ref(currentMonth())
-const status = reactive({ message: '', tone: '' })
-const isFetching = ref(false)
-const isSyncingAll = ref(false)
-const apiOk = ref(false)
-const syncingIds = ref<Set<string>>(new Set())
-
-const summary = computed(() => summarize())
 
 onMounted(async () => {
   if (isFileMode) {
@@ -275,10 +266,6 @@ function setSyncing(id: string, on: boolean) {
   syncingIds.value = next
 }
 
-function isSyncing(id: string) {
-  return syncingIds.value.has(id)
-}
-
 function deleteRecord(id: string) {
   if (!confirm('確定刪除這筆紀錄？')) return
   removeRecord(id)
@@ -328,96 +315,6 @@ function exportCsv() {
   })
   const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')
   downloadFile('saiens-bonus-records.csv', `﻿${csv}`, 'text/csv;charset=utf-8')
-}
-
-function summarize() {
-  const signed = new Map<string, QuarterSummary>()
-  const paid = new Map<string, QuarterSummary>()
-  const totals = { final: 0, taxExcludedAmount: 0, taxIncludedAmount: 0, uncomputableCount: 0 }
-
-  visibleRecords.value.forEach((record) => {
-    const signedQuarter = getFiscalQuarter(record.signedMonth)
-    const paidQuarter = getFiscalQuarter(record.paidMonth)
-    // Pre-cutoff quarters have no multiplier system, so the final bonus is
-    // uncomputable here — exclude it from every bonus total.
-    const computable = multipliersApply(signedQuarter.key)
-    const final = computable ? finalCommissionFor(record) : 0
-    if (computable) totals.final += final
-    else totals.uncomputableCount += 1
-    totals.taxExcludedAmount += toNumber(record.taxExcludedAmount)
-    totals.taxIncludedAmount += toNumber(record.taxIncludedAmount)
-
-    if (signedQuarter.key) {
-      ensureSummary(signed, signedQuarter)
-      const item = signed.get(signedQuarter.key)
-      if (item) {
-        item.count += 1
-        item.taxExcludedAmount += toNumber(record.taxExcludedAmount)
-        item.base += baseCommissionFor(record)
-        if (computable) {
-          item.computableCount += 1
-          item.final += final
-        }
-      }
-    }
-
-    if (paidQuarter.key) {
-      ensureSummary(paid, paidQuarter)
-      const item = paid.get(paidQuarter.key)
-      if (item) {
-        item.count += 1
-        if (computable) {
-          item.computableCount += 1
-          item.final += final
-        }
-      }
-    }
-  })
-
-  return {
-    totals,
-    signed: Array.from(signed.values()).sort((a, b) => b.order - a.order),
-    paid: Array.from(paid.values()).sort((a, b) => b.order - a.order),
-  }
-}
-
-function ensureSummary(map: Map<string, QuarterSummary>, quarter: QuarterInfo) {
-  if (!map.has(quarter.key)) {
-    map.set(quarter.key, {
-      ...quarter,
-      count: 0,
-      computableCount: 0,
-      final: 0,
-      base: 0,
-      taxExcludedAmount: 0,
-    })
-  }
-}
-
-function baseCommissionFor(record: BonusRecord) {
-  return (toNumber(record.taxExcludedAmount) * toNumber(record.baseCommissionRate)) / 100
-}
-
-function finalCommissionFor(record: BonusRecord) {
-  const signedQuarter = getFiscalQuarter(record.signedMonth).key
-  // Quarters before the cutoff (e.g. 2026-Q1) earn base commission only.
-  if (!multipliersApply(signedQuarter)) return Math.round(baseCommissionFor(record))
-  const multiplier = multiplierFor(signedQuarter)
-  return Math.round(
-    baseCommissionFor(record) *
-      toNumber(multiplier.rocket || 1) *
-      toNumber(multiplier.repurchase || 1) *
-      toNumber(multiplier.avgOrder || 1) *
-      toNumber(multiplier.yieldRate || 1),
-  )
-}
-
-function recordWarnings(record: BonusRecord) {
-  const warnings = []
-  if (!record.signedMonth) warnings.push('未抓到回簽月份，請手動選擇')
-  if (record.customerType === 'unknown') warnings.push('請確認獎金%')
-  if (record.amountInferred) warnings.push('金額為系統反推，請確認')
-  return warnings.join('；')
 }
 
 function amountDebugText(debug: Record<string, unknown> = {}) {
@@ -492,40 +389,21 @@ function downloadFile(filename: string, content: string, type: string) {
 
 <template>
   <main class="app-shell">
-    <div v-if="isLoading" class="db-loading">資料讀取中…</div>
-    <div v-if="dbError" class="db-error-banner">
-      {{ dbError }}
-      <button type="button" class="db-error-close" @click="dbError = ''">×</button>
-    </div>
-    <header class="page-head">
+    <DbStatusBanner />
+
+    <header class="page-head page-head--compact">
       <div>
         <h1>季度獎金帳本</h1>
         <p>
           回簽月份決定獎金%與倍率，收款月份決定實際發放季度。金額以報價單「未連稅金額」與「總計」為準。
         </p>
       </div>
-      <div class="head-controls">
-        <label v-if="filterYears.length" class="year-filter">
-          年度
-          <select v-model="selectedYear">
-            <option value="all">全部</option>
-            <option v-for="year in filterYears" :key="year" :value="year">{{ year }}</option>
-          </select>
-        </label>
-        <label class="year-filter">
-          季度
-          <select v-model="selectedQuarter">
-            <option value="all">全部</option>
-            <option v-for="q in ['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]" :key="q" :value="q">
-              {{ q }}
-            </option>
-          </select>
-        </label>
-        <span v-if="apiOk" class="badge ok">API 已連線</span>
-      </div>
+      <span v-if="apiOk" class="badge ok">API 已連線</span>
     </header>
 
-    <section class="panel">
+    <LedgerTabs v-model="activeTab" />
+
+    <section v-show="activeTab === 'overview'" class="panel">
       <h2>新增報價單</h2>
       <div v-if="isFileMode" class="server-notice">
         <strong>此工具需要透過本機伺服器啟動，請不要直接點 HTML 檔。</strong>
@@ -558,9 +436,9 @@ npm start
       <p class="status" :class="status.tone">{{ status.message }}</p>
     </section>
 
-    <section class="panel">
+    <section v-show="activeTab === 'overview'" class="panel">
       <div class="section-head">
-        <h2>總覽</h2>
+        <h2>篩選範圍總覽</h2>
         <div class="tool-row">
           <button class="secondary" type="button" @click="exportCsv">匯出 CSV</button>
         </div>
@@ -588,7 +466,7 @@ npm start
       </div>
     </section>
 
-    <section class="panel">
+    <section v-show="activeTab === 'signed'" class="panel">
       <div class="quarter-section-head">
         <div>
           <p class="quarter-section-tag">依回簽月份</p>
@@ -645,7 +523,7 @@ npm start
       </div>
     </section>
 
-    <section class="panel">
+    <section v-show="activeTab === 'paid'" class="panel">
       <div class="quarter-section-head">
         <div>
           <p class="quarter-section-tag">依收款月份</p>
@@ -688,7 +566,7 @@ npm start
       </div>
     </section>
 
-    <section class="panel">
+    <section v-show="activeTab === 'records'" class="panel">
       <div class="section-head">
         <h2>報價單紀錄</h2>
         <div v-if="visibleRecords.length > 0" class="tool-row">
@@ -707,180 +585,19 @@ npm start
         {{
           records.length === 0
             ? '尚無報價單紀錄。輸入網址、回簽月份與收款月份後，按「抓取報價單」新增。'
-            : '此篩選條件下尚無報價單紀錄。可切換上方年度或季度，或選「全部」。'
+            : '此篩選條件下尚無報價單紀錄。可切換上方工作季度篩選，或選「全部」。'
         }}
       </div>
-      <div v-else class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>案件編號</th>
-              <th>客戶名稱</th>
-              <th>客戶類型</th>
-              <th>回簽月份</th>
-              <th>收款月份</th>
-              <th>回簽季度</th>
-              <th>發放季度</th>
-              <th>未連稅金額</th>
-              <th>總計</th>
-              <th>基礎獎金%</th>
-              <th>套用倍率</th>
-              <th>最終獎金</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="record in [...visibleRecords].sort((a, b) =>
-                (b.paidMonth || '').localeCompare(a.paidMonth || ''),
-              )"
-              :key="record.id"
-            >
-              <td class="order-cell">
-                <a
-                  v-if="record.quoteUrl"
-                  :href="record.quoteUrl"
-                  target="_blank"
-                  rel="noreferrer"
-                  :title="record.quoteUrl"
-                >
-                  {{ record.orderNo || '報價單' }}
-                  <ExternalLink :size="12" :stroke-width="2" />
-                </a>
-                <span v-else>{{ record.orderNo || '-' }}</span>
-              </td>
-              <td>{{ record.customerName || '-' }}</td>
-              <td>
-                <span class="type-pill" :class="{ unknown: record.customerType === 'unknown' }">{{
-                  customerTypeLabel(record.customerType)
-                }}</span>
-                <div v-if="recordWarnings(record)" class="status error">
-                  {{ recordWarnings(record) }}
-                </div>
-              </td>
-              <td>
-                <input
-                  :value="record.signedMonth"
-                  type="month"
-                  @input="
-                    updateRecord(record, 'signedMonth', ($event.target as HTMLInputElement).value)
-                  "
-                />
-              </td>
-              <td>
-                <input
-                  :value="record.paidMonth"
-                  type="month"
-                  @input="
-                    updateRecord(record, 'paidMonth', ($event.target as HTMLInputElement).value)
-                  "
-                />
-              </td>
-              <td>{{ getFiscalQuarter(record.signedMonth).key || '-' }}</td>
-              <td>{{ getFiscalQuarter(record.paidMonth).key || '-' }}</td>
-              <td class="money">
-                <input
-                  :value="record.taxExcludedAmount"
-                  type="number"
-                  min="0"
-                  step="1"
-                  @input="
-                    updateRecord(
-                      record,
-                      'taxExcludedAmount',
-                      ($event.target as HTMLInputElement).value,
-                    )
-                  "
-                />
-              </td>
-              <td class="money">
-                <input
-                  :value="record.taxIncludedAmount"
-                  type="number"
-                  min="0"
-                  step="1"
-                  @input="
-                    updateRecord(
-                      record,
-                      'taxIncludedAmount',
-                      ($event.target as HTMLInputElement).value,
-                    )
-                  "
-                />
-              </td>
-              <td class="rate">
-                <input
-                  :value="record.baseCommissionRate"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  @input="
-                    updateRecord(
-                      record,
-                      'baseCommissionRate',
-                      ($event.target as HTMLInputElement).value,
-                    )
-                  "
-                />
-              </td>
-              <td class="mult-cell">
-                <template v-if="multipliersApply(getFiscalQuarter(record.signedMonth).key)">
-                  <span
-                    :title="
-                      multiplierSummary(
-                        getFiscalQuarter(record.signedMonth).key,
-                        multiplierFor(getFiscalQuarter(record.signedMonth).key),
-                      )
-                    "
-                    >×{{
-                      formatNumber(
-                        combinedMultiplier(multiplierFor(getFiscalQuarter(record.signedMonth).key)),
-                      )
-                    }}</span
-                  >
-                  <div
-                    v-if="
-                      isDefaultMultiplier(multiplierFor(getFiscalQuarter(record.signedMonth).key))
-                    "
-                    class="hint"
-                  >
-                    尚未設定，暫以 1
-                  </div>
-                </template>
-                <span v-else class="muted-cell">無倍率</span>
-              </td>
-              <td class="bonus">
-                <template v-if="multipliersApply(getFiscalQuarter(record.signedMonth).key)">
-                  {{ money.format(finalCommissionFor(record)) }}
-                </template>
-                <span v-else class="muted-cell">無法計算</span>
-              </td>
-              <td class="actions-cell">
-                <div class="table-actions">
-                  <button
-                    class="table-action"
-                    type="button"
-                    :disabled="isFileMode || isSyncing(record.id) || isSyncingAll"
-                    @click="resyncRecord(record)"
-                  >
-                    <RefreshCw :size="13" :stroke-width="2" :class="{ spinning: isSyncing(record.id) }" />
-                    <span>{{ isSyncing(record.id) ? '同步中…' : '再同步' }}</span>
-                  </button>
-                  <button
-                    class="table-action table-action-danger"
-                    type="button"
-                    :disabled="isSyncingAll"
-                    @click="deleteRecord(record.id)"
-                  >
-                    <Trash2 :size="13" :stroke-width="2" />
-                    <span>刪除</span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <RecordsTable
+        v-else
+        :records="visibleRecords"
+        :is-file-mode="isFileMode"
+        :is-loading="isLoading"
+        :is-syncing-all="isSyncingAll"
+        :syncing-ids="syncingIds"
+        @resync="resyncRecord"
+        @delete="deleteRecord"
+      />
       <div class="notice">
         <ul class="notice-list">
           <li>1 月會歸到前一年度 Q4。</li>

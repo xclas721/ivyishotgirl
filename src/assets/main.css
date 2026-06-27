@@ -7,7 +7,7 @@
    Type: SF Pro (system) — hairline numerals as signature
 ────────────────────────────────────────────────────────── */
 @theme {
-  --color-bg: #f6f4f1;
+  --color-bg: #e9ecef;
   --color-surface: #ffffff;
   --color-ink: #1a1917;
   --color-muted: #6e6762;
@@ -39,39 +39,12 @@
   }
 
   html {
-    /* White marble: warm base + grain noise + vein gradients */
-    background-color: #f6f4f1;
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
-      linear-gradient(
-        118deg,
-        transparent 0%,
-        transparent 28%,
-        rgba(185, 180, 174, 0.18) 32%,
-        rgba(195, 190, 184, 0.12) 35%,
-        transparent 40%
-      ),
-      linear-gradient(
-        195deg,
-        transparent 15%,
-        rgba(178, 173, 168, 0.1) 22%,
-        rgba(188, 183, 177, 0.07) 26%,
-        transparent 32%
-      ),
-      linear-gradient(
-        52deg,
-        transparent 55%,
-        rgba(200, 196, 190, 0.12) 62%,
-        rgba(210, 206, 200, 0.08) 66%,
-        transparent 72%
-      ),
-      linear-gradient(
-        158deg,
-        rgba(215, 211, 205, 0.09) 5%,
-        transparent 20%,
-        rgba(205, 201, 195, 0.06) 68%,
-        transparent 85%
-      );
+    /* Elegant Winter marble — public/marble-bg.jpg (MQ-751) */
+    background-color: #e9ecef;
+    background-image: url('/marble-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     background-attachment: fixed;
     min-height: 100%;
   }
@@ -349,6 +322,110 @@
     min-width: 0;
     min-height: 100vh;
     background: transparent;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Global quarter context — sticky under sidebar layout */
+  .quarter-context-bar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1fr);
+    gap: 16px 20px;
+    align-items: center;
+    margin: 0 auto;
+    width: min(var(--layout-content-max), calc(100% - 40px));
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.52);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  .quarter-context-label {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .quarter-context-title {
+    margin: 2px 0 0;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+  }
+
+  .quarter-context-hint {
+    margin: 2px 0 0;
+    font-size: 11px;
+    color: var(--color-muted);
+  }
+
+  .quarter-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-self: center;
+  }
+
+  .quarter-context-kpis {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    justify-self: end;
+  }
+
+  .context-kpi {
+    display: grid;
+    gap: 2px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.55);
+    min-width: 0;
+  }
+
+  .context-kpi-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .context-kpi-value {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+
+  .context-kpi--accrual .context-kpi-value {
+    color: var(--color-copper);
+  }
+
+  .context-kpi-meta {
+    font-size: 11px;
+    color: var(--color-muted);
+  }
+
+  @media (max-width: 960px) {
+    .quarter-context-bar {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .quarter-filter,
+    .quarter-context-kpis {
+      justify-self: stretch;
+    }
   }
 
   /* ≤768px: sidebar → top bar */
@@ -434,6 +511,64 @@
     letter-spacing: -0.005em;
   }
 
+  .page-head--compact {
+    padding-bottom: 0;
+    border-bottom: 0;
+    align-items: start;
+  }
+
+  /* Ledger tabs */
+  .ledger-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+
+  .ledger-tab {
+    display: grid;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.42);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 0.12s,
+      background 0.12s,
+      box-shadow 0.12s;
+  }
+
+  .ledger-tab:hover {
+    background: rgba(255, 255, 255, 0.62);
+    transform: none;
+  }
+
+  .ledger-tab.is-active {
+    border-color: rgba(168, 113, 46, 0.35);
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 1px 0 rgba(168, 113, 46, 0.12);
+  }
+
+  .ledger-tab-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: -0.01em;
+  }
+
+  .ledger-tab-hint {
+    font-size: 11px;
+    color: var(--color-muted);
+  }
+
+  @media (max-width: 768px) {
+    .ledger-tabs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
   .head-controls {
     display: flex;
     align-items: center;
@@ -484,19 +619,19 @@
     border-color: rgba(168, 113, 46, 0.2);
   }
 
-  /* Panel — frosted glass, 62% white + blur */
+  /* Panel — frosted glass; keep translucency so marble veins show through */
   .panel {
     min-width: 0;
-    background: rgba(255, 255, 255, 0.62);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.58);
+    background: rgba(255, 255, 255, 0.48);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.52);
     border-radius: 14px;
     padding: 22px 24px;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72),
       0 2px 8px rgba(0, 0, 0, 0.04),
-      0 8px 32px rgba(0, 0, 0, 0.06);
+      0 8px 32px rgba(0, 0, 0, 0.05);
   }
 
   /* Solid fallback for browsers without backdrop-filter */
@@ -1002,6 +1137,65 @@
 
   tr:hover td.actions-cell {
     background: rgba(255, 255, 255, 0.88);
+  }
+
+  /* Records table — column groups + sticky identity columns */
+  .records-table table {
+    min-width: 1320px;
+  }
+
+  .records-table .colgroup-row th.colgroup-head {
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    background: rgba(255, 255, 255, 0.62);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  }
+
+  .records-table .sticky-col {
+    position: sticky;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.88);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .records-table th.sticky-col {
+    z-index: 3;
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .records-table .sticky-col-1 {
+    left: 0;
+    min-width: 118px;
+  }
+
+  .records-table .sticky-col-2 {
+    left: 118px;
+    min-width: 120px;
+  }
+
+  .records-table .sticky-col-3 {
+    left: 238px;
+    min-width: 128px;
+  }
+
+  .records-table th.colgroup-actions,
+  .records-table td.actions-cell {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+  }
+
+  .records-table th.colgroup-actions {
+    z-index: 4;
+    background: rgba(255, 255, 255, 0.92);
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  tr:hover .records-table td.sticky-col,
+  .records-table tr:hover td.sticky-col,
+  .records-table tr:hover td.actions-cell {
+    background: rgba(255, 255, 255, 0.96);
   }
 
   .table-actions {
