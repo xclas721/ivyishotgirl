@@ -223,10 +223,32 @@ def parse_quote_html(html: str, quote_url: str) -> dict:
 def extract_order_no(text: str, quote_url: str) -> str:
     m = re.search(r"/orders/(\d+)", quote_url)
     from_url = m.group(1) if m else ""
-    m2 = re.search(r"(?:報價單|訂單|案件|編號|Order|Quote)[^\d]{0,20}(\d{4,})", text, re.I)
-    m3 = re.search(r"#\s*(\d{4,})", text)
-    from_text = (m2.group(1) if m2 else "") or (m3.group(1) if m3 else "")
-    return from_text or from_url
+
+    # Saiens pages show a business case id (e.g. S11812) under 案件編號, separate
+    # from the numeric /orders/{id} in the URL. Prefer explicit labels — the old
+    # generic regex often matched phone numbers or partial digits from S-codes.
+    for pat in (
+        r"案件編號\s*[：:]\s*\n?\s*([A-Za-z0-9_-]+)",
+        r"報價單編號\s*[：:]\s*\n?\s*([A-Za-z0-9_-]+)",
+        r"訂單編號\s*[：:]\s*\n?\s*([A-Za-z0-9_-]+)",
+    ):
+        m_label = re.search(pat, text)
+        if m_label:
+            return m_label.group(1).strip()
+
+    lines = [ln.strip() for ln in text.split("\n")]
+    for i, line in enumerate(lines):
+        for name in ("案件編號", "報價單編號", "訂單編號"):
+            m_inline = re.match(rf"^{re.escape(name)}\s*[：:]\s*(.+)$", line)
+            if m_inline and m_inline.group(1).strip():
+                return m_inline.group(1).strip()
+            if re.match(rf"^{re.escape(name)}\s*[：:]?\s*$", line):
+                for j in range(i + 1, min(i + 4, len(lines))):
+                    candidate = lines[j].strip()
+                    if candidate and candidate not in {"/"}:
+                        return candidate
+
+    return from_url
 
 
 def extract_customer_name(text: str) -> str:

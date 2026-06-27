@@ -33,12 +33,14 @@ const paidCount = computed(() => paidVisibleRecords.value.length)
     <QuarterFilter />
     <div class="quarter-context-kpis">
       <div class="context-kpi context-kpi--accrual">
-        <span class="context-kpi-label">應計獎金</span>
+        <span class="context-kpi-label context-kpi-label--long">應計獎金</span>
+        <span class="context-kpi-label context-kpi-label--short">應計</span>
         <strong class="context-kpi-value">{{ money.format(accrualTotal) }}</strong>
         <span class="context-kpi-meta">{{ signedCount }} 筆回簽</span>
       </div>
       <div class="context-kpi context-kpi--payout">
-        <span class="context-kpi-label">實領（本季收款）</span>
+        <span class="context-kpi-label context-kpi-label--long">實領（本季收款）</span>
+        <span class="context-kpi-label context-kpi-label--short">實領</span>
         <strong class="context-kpi-value">{{ money.format(payoutTotal) }}</strong>
         <span class="context-kpi-meta">{{ paidCount }} 筆收款</span>
       </div>

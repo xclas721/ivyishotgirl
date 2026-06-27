@@ -12,11 +12,12 @@ const tabs: { id: LedgerTabId; label: string; hint: string }[] = [
 </script>
 
 <template>
-  <nav class="ledger-tabs" aria-label="帳本分頁">
+  <nav class="ledger-tabs" role="tablist" aria-label="帳本分頁">
     <button
       v-for="tab in tabs"
       :key="tab.id"
       type="button"
+      role="tab"
       class="ledger-tab"
       :class="{ 'is-active': model === tab.id }"
       :aria-selected="model === tab.id"
