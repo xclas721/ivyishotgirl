@@ -772,6 +772,74 @@
     margin-bottom: 0;
   }
 
+  .add-url-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .add-url-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 160px auto;
+    gap: 8px;
+    align-items: end;
+  }
+
+  .add-url-field {
+    display: grid;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-muted);
+  }
+
+  .add-url-field input {
+    min-height: 36px;
+  }
+
+  .add-url-field--paid input {
+    width: 100%;
+  }
+
+  .add-url-index {
+    margin-left: 6px;
+    color: var(--color-muted);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .add-url-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.55);
+    color: var(--color-muted);
+    cursor: pointer;
+  }
+
+  .add-url-remove:hover:not(:disabled) {
+    color: var(--color-danger);
+    background: rgba(165, 40, 40, 0.06);
+    transform: none;
+  }
+
+  .add-url-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .add-url-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding-top: 2px;
+  }
+
   .add-grid {
     display: grid;
     grid-template-columns: minmax(300px, 1fr) 160px 160px auto;
@@ -1717,9 +1785,9 @@
       width: min(var(--layout-content-max), calc(100% - 32px));
     }
 
-    /* URL full-width, months side-by-side, button below */
+    /* legacy add-grid — kept if reused elsewhere */
     .add-grid {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
     }
 
     .add-grid > label:first-child {
@@ -1759,6 +1827,18 @@
 
     .add-grid {
       grid-template-columns: 1fr;
+    }
+
+    .add-url-row {
+      grid-template-columns: 1fr;
+    }
+
+    .add-url-actions {
+      width: 100%;
+    }
+
+    .add-url-actions button:last-child {
+      flex: 1;
     }
 
     .section-head {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 export type LedgerTabId = 'overview' | 'records' | 'signed' | 'paid'
 
-const model = defineModel<LedgerTabId>({ required: true })
+const model = defineModel<LedgerTabId[]>({ required: true })
 
 const tabs: { id: LedgerTabId; label: string; hint: string }[] = [
   { id: 'overview', label: '總覽', hint: 'KPI 與新增' },
@@ -9,19 +9,31 @@ const tabs: { id: LedgerTabId; label: string; hint: string }[] = [
   { id: 'signed', label: '回簽試算', hint: '依回簽季度' },
   { id: 'paid', label: '發放實領', hint: '依收款季度' },
 ]
+
+function isActive(id: LedgerTabId) {
+  return model.value.includes(id)
+}
+
+function toggleTab(id: LedgerTabId) {
+  if (isActive(id)) {
+    model.value = model.value.filter((section) => section !== id)
+    return
+  }
+  model.value = [...model.value, id]
+}
 </script>
 
 <template>
-  <nav class="ledger-tabs" role="tablist" aria-label="帳本分頁">
+  <nav class="ledger-tabs" role="tablist" aria-label="帳本區塊">
     <button
       v-for="tab in tabs"
       :key="tab.id"
       type="button"
       role="tab"
       class="ledger-tab"
-      :class="{ 'is-active': model === tab.id }"
-      :aria-selected="model === tab.id"
-      @click="model = tab.id"
+      :class="{ 'is-active': isActive(tab.id) }"
+      :aria-selected="isActive(tab.id)"
+      @click="toggleTab(tab.id)"
     >
       <span class="ledger-tab-label">{{ tab.label }}</span>
       <span class="ledger-tab-hint">{{ tab.hint }}</span>

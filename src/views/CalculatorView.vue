@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref } from 'vue'
+import { Plus, X } from 'lucide-vue-next'
 import { getFiscalQuarter, multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
 import type { Quarter } from '@/shared/fiscalQuarter'
 import type { CustomerType } from '@/lib/db'
@@ -36,10 +37,17 @@ const money = new Intl.NumberFormat('zh-TW', {
 })
 const integer = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 })
 
-const activeTab = ref<LedgerTabId>('overview')
-const quoteUrl = ref('')
-const signedMonth = ref('')
-const paidMonth = ref(currentMonth())
+interface QuoteDraftRow {
+  url: string
+  paidMonth: string
+}
+
+function newQuoteDraftRow(): QuoteDraftRow {
+  return { url: '', paidMonth: currentMonth() }
+}
+
+const visibleSections = ref<LedgerTabId[]>(['overview', 'records'])
+const quoteDrafts = ref<QuoteDraftRow[]>([newQuoteDraftRow()])
 const status = reactive({ message: '', tone: '' })
 const isFetching = ref(false)
 const isSyncingAll = ref(false)
@@ -98,54 +106,101 @@ async function checkApiHealth() {
   }
 }
 
-async function fetchQuote() {
+async function fetchQuotes() {
   if (isFileMode) {
     showStatus('請先用 http://localhost:3000 開啟後再抓取報價單。', '')
     return
   }
 
-  const inputUrl = quoteUrl.value.trim()
-  if (!inputUrl) return showStatus('請先輸入報價單網址。', 'error')
-  if (!paidMonth.value) return showStatus('請選擇收款月份。', 'error')
-
-  try {
-    const url = new URL(inputUrl)
-    if (url.hostname !== 'quote.saiens.tw')
-      return showStatus('只能抓取 quote.saiens.tw 的報價單網址。', 'error')
-  } catch {
-    return showStatus('報價單網址格式不正確。', 'error')
+  const entries = quoteDrafts.value
+    .map((row) => ({ url: row.url.trim(), paidMonth: row.paidMonth }))
+    .filter((row) => row.url)
+  if (entries.length === 0) return showStatus('請先輸入報價單網址。', 'error')
+  if (entries.some((entry) => !isValidQuoteUrl(entry.url))) {
+    return showStatus('每筆網址都需為 quote.saiens.tw 的有效連結。', 'error')
+  }
+  if (entries.some((entry) => !entry.paidMonth)) {
+    return showStatus('每筆都需選擇收款月份。', 'error')
   }
 
   isFetching.value = true
-  showStatus('正在抓取報價單...')
+  let ok = 0
+  let fail = 0
+  let lastRecordId = ''
+  let lastSignedMonth = ''
 
-  try {
-    const quote = await requestQuote(inputUrl)
-    const recordId = canonicalUrl(quote.quoteUrl || inputUrl)
-    const finalSignedMonth = signedMonth.value || quote.signedMonth || ''
-    upsertRecord(
-      applyQuoteToRecord(quote, {
-        id: recordId,
-        quoteUrl: quote.quoteUrl || inputUrl,
-        signedMonth: finalSignedMonth,
-        paidMonth: paidMonth.value,
-      }),
-    )
+  for (const [i, entry] of entries.entries()) {
+    const label = entries.length > 1 ? ` ${i + 1}/${entries.length}` : ''
+    showStatus(`正在抓取報價單${label}...`)
 
-    quoteUrl.value = ''
-    signedMonth.value = ''
-    showStatus(...quoteResultMessage(quote, finalSignedMonth, '已新增'))
-    await revealRecord(recordId, finalSignedMonth)
-  } catch (error) {
-    showStatus(`抓取失敗：${friendlyFetchError(error)}`, 'error')
-  } finally {
-    isFetching.value = false
+    try {
+      const quote = await requestQuote(entry.url)
+      const recordId = canonicalUrl(quote.quoteUrl || entry.url)
+      const finalSignedMonth = quote.signedMonth || ''
+      upsertRecord(
+        applyQuoteToRecord(quote, {
+          id: recordId,
+          quoteUrl: quote.quoteUrl || entry.url,
+          signedMonth: finalSignedMonth,
+          paidMonth: entry.paidMonth,
+        }),
+      )
+      ok += 1
+      lastRecordId = recordId
+      lastSignedMonth = finalSignedMonth
+    } catch (error) {
+      fail += 1
+      console.error('[fetch-quotes]', entry.url, error)
+    }
   }
+
+  isFetching.value = false
+  quoteDrafts.value = [newQuoteDraftRow()]
+
+  if (ok === 0) {
+    showStatus(`${fail} 筆抓取失敗。`, 'error')
+    return
+  }
+
+  if (fail === 0) {
+    showStatus(ok === 1 ? '已新增報價單。' : `已新增 ${ok} 筆報價單。`, 'ok')
+  } else {
+    showStatus(`新增完成：${ok} 筆成功、${fail} 筆失敗。`, 'error')
+  }
+
+  if (lastRecordId) await revealRecord(lastRecordId, lastSignedMonth)
+}
+
+function isValidQuoteUrl(inputUrl: string) {
+  try {
+    return new URL(inputUrl).hostname === 'quote.saiens.tw'
+  } catch {
+    return false
+  }
+}
+
+function addQuoteDraftRow() {
+  quoteDrafts.value.push(newQuoteDraftRow())
+}
+
+function removeQuoteDraftRow(index: number) {
+  if (quoteDrafts.value.length <= 1) {
+    quoteDrafts.value[0] = newQuoteDraftRow()
+    return
+  }
+  quoteDrafts.value.splice(index, 1)
+}
+
+function fetchButtonLabel() {
+  const count = quoteDrafts.value.filter((row) => row.url.trim()).length
+  if (isFetching.value) return '抓取中...'
+  if (count > 1) return `抓取 ${count} 筆`
+  return '抓取報價單'
 }
 
 async function revealRecord(recordId: string, signedMonth: string) {
   applyFilterForSignedMonth(signedMonth)
-  activeTab.value = 'records'
+  ensureSectionVisible('records')
   highlightedRecordId.value = recordId
   await nextTick()
   document.getElementById(`record-row-${recordId}`)?.scrollIntoView({
@@ -155,6 +210,16 @@ async function revealRecord(recordId: string, signedMonth: string) {
   window.setTimeout(() => {
     if (highlightedRecordId.value === recordId) highlightedRecordId.value = ''
   }, 4000)
+}
+
+function isSectionVisible(id: LedgerTabId) {
+  return visibleSections.value.includes(id)
+}
+
+function ensureSectionVisible(id: LedgerTabId) {
+  if (!visibleSections.value.includes(id)) {
+    visibleSections.value = [...visibleSections.value, id]
+  }
 }
 
 // Re-fetch quote data for one record, keeping user-set 回簽/收款月份.
@@ -420,9 +485,9 @@ function downloadFile(filename: string, content: string, type: string) {
       <span v-if="apiOk" class="badge ok">API 已連線</span>
     </header>
 
-    <LedgerTabs v-model="activeTab" />
+    <LedgerTabs v-model="visibleSections" />
 
-    <section v-show="activeTab === 'overview'" class="panel">
+    <section v-show="isSectionVisible('overview')" class="panel">
       <h2>新增報價單</h2>
       <div v-if="isFileMode" class="server-notice">
         <strong>此工具需要透過本機伺服器啟動，請不要直接點 HTML 檔。</strong>
@@ -431,31 +496,57 @@ npm install
 npm start
 打開 http://localhost:3000</pre>
       </div>
-      <div class="add-grid">
-        <label>
-          報價單網址
-          <input
-            v-model="quoteUrl"
-            type="url"
-            placeholder="貼上 quote.saiens.tw/my/orders/... 網址"
-          />
-        </label>
-        <label>
-          回簽月份
-          <input v-model="signedMonth" type="month" />
-        </label>
-        <label>
-          收款月份
-          <input v-model="paidMonth" type="month" />
-        </label>
-        <button type="button" :disabled="isFetching || isFileMode || isLoading" @click="fetchQuote">
-          {{ isFetching ? '抓取中...' : '抓取報價單' }}
-        </button>
+      <div class="add-url-list">
+        <div v-for="(draft, index) in quoteDrafts" :key="index" class="add-url-row">
+          <label class="add-url-field add-url-field--url">
+            報價單網址
+            <span v-if="quoteDrafts.length > 1" class="add-url-index">#{{ index + 1 }}</span>
+            <input
+              v-model="draft.url"
+              type="url"
+              placeholder="貼上 quote.saiens.tw/my/orders/... 網址"
+              @keydown.enter.prevent="fetchQuotes"
+            />
+          </label>
+          <label class="add-url-field add-url-field--paid">
+            收款月份
+            <input v-model="draft.paidMonth" type="month" />
+          </label>
+          <button
+            v-if="quoteDrafts.length > 1"
+            class="add-url-remove"
+            type="button"
+            title="移除此列"
+            :disabled="isFetching"
+            @click="removeQuoteDraftRow(index)"
+          >
+            <X :size="14" :stroke-width="2" />
+          </button>
+        </div>
+        <div class="add-url-actions">
+          <button
+            class="secondary add-url-add"
+            type="button"
+            :disabled="isFetching || isFileMode || isLoading"
+            @click="addQuoteDraftRow"
+          >
+            <Plus :size="14" :stroke-width="2" />
+            再加一筆
+          </button>
+          <button
+            type="button"
+            :disabled="isFetching || isFileMode || isLoading"
+            @click="fetchQuotes"
+          >
+            {{ fetchButtonLabel() }}
+          </button>
+        </div>
       </div>
+      <p class="hint">回簽月份由報價單自動帶入；每列可各自設定收款月份。</p>
       <p class="status" :class="status.tone">{{ status.message }}</p>
     </section>
 
-    <section v-show="activeTab === 'overview'" class="panel">
+    <section v-show="isSectionVisible('overview')" class="panel">
       <div class="section-head">
         <h2>篩選範圍總覽</h2>
         <div class="tool-row">
@@ -485,7 +576,51 @@ npm start
       </div>
     </section>
 
-    <section v-show="activeTab === 'signed'" class="panel">
+    <section v-show="isSectionVisible('records')" class="panel">
+      <div class="section-head">
+        <h2>報價單紀錄</h2>
+        <div v-if="visibleRecords.length > 0" class="tool-row">
+          <button
+            class="secondary"
+            type="button"
+            title="從報價單網址重新抓取最新資料（僅目前篩選範圍內的紀錄）"
+            :disabled="isFileMode || isLoading || isSyncingAll"
+            @click="resyncAllVisible"
+          >
+            {{ isSyncingAll ? '抓取中…' : `全部再同步（${visibleRecords.length}）` }}
+          </button>
+        </div>
+      </div>
+      <div v-if="visibleRecords.length === 0" class="empty">
+        {{
+          records.length === 0
+            ? '尚無報價單紀錄。貼上報價單網址後，按「抓取報價單」新增。'
+            : '此篩選條件下尚無報價單紀錄。可切換上方工作季度篩選，或選「全部」。'
+        }}
+      </div>
+      <RecordsTable
+        v-else
+        :records="visibleRecords"
+        :highlight-id="highlightedRecordId"
+        :is-file-mode="isFileMode"
+        :is-loading="isLoading"
+        :is-syncing-all="isSyncingAll"
+        :syncing-ids="syncingIds"
+        @resync="resyncRecord"
+        @delete="deleteRecord"
+      />
+      <div class="notice">
+        <ul class="notice-list">
+          <li>1 月會歸到前一年度 Q4。</li>
+          <li>若同一網址重複新增，會更新原本那筆資料。</li>
+          <li>
+            倍率與最終獎金自 {{ MULTIPLIER_START_KEY }} 起適用，此前季度無法計算。
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section v-show="isSectionVisible('signed')" class="panel">
       <div class="quarter-section-head">
         <div>
           <p class="quarter-section-tag">依回簽月份</p>
@@ -542,7 +677,7 @@ npm start
       </div>
     </section>
 
-    <section v-show="activeTab === 'paid'" class="panel">
+    <section v-show="isSectionVisible('paid')" class="panel">
       <div class="quarter-section-head">
         <div>
           <p class="quarter-section-tag">依收款月份</p>
@@ -582,50 +717,6 @@ npm start
             <template v-if="item.computableCount === 0 && item.count > 0"> 皆為無倍率季度</template>
           </p>
         </article>
-      </div>
-    </section>
-
-    <section v-show="activeTab === 'records'" class="panel">
-      <div class="section-head">
-        <h2>報價單紀錄</h2>
-        <div v-if="visibleRecords.length > 0" class="tool-row">
-          <button
-            class="secondary"
-            type="button"
-            title="從報價單網址重新抓取最新資料（僅目前篩選範圍內的紀錄）"
-            :disabled="isFileMode || isLoading || isSyncingAll"
-            @click="resyncAllVisible"
-          >
-            {{ isSyncingAll ? '抓取中…' : `全部再同步（${visibleRecords.length}）` }}
-          </button>
-        </div>
-      </div>
-      <div v-if="visibleRecords.length === 0" class="empty">
-        {{
-          records.length === 0
-            ? '尚無報價單紀錄。輸入網址、回簽月份與收款月份後，按「抓取報價單」新增。'
-            : '此篩選條件下尚無報價單紀錄。可切換上方工作季度篩選，或選「全部」。'
-        }}
-      </div>
-      <RecordsTable
-        v-else
-        :records="visibleRecords"
-        :highlight-id="highlightedRecordId"
-        :is-file-mode="isFileMode"
-        :is-loading="isLoading"
-        :is-syncing-all="isSyncingAll"
-        :syncing-ids="syncingIds"
-        @resync="resyncRecord"
-        @delete="deleteRecord"
-      />
-      <div class="notice">
-        <ul class="notice-list">
-          <li>1 月會歸到前一年度 Q4。</li>
-          <li>若同一網址重複新增，會更新原本那筆資料。</li>
-          <li>
-            倍率與最終獎金自 {{ MULTIPLIER_START_KEY }} 起適用，此前季度無法計算。
-          </li>
-        </ul>
       </div>
     </section>
   </main>
