@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { getFiscalQuarter, multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
+import type { Quarter } from '@/shared/fiscalQuarter'
 import type { CustomerType } from '@/lib/db'
 import type { BonusRecord } from '@/lib/db'
 import DbStatusBanner from '@/components/layout/DbStatusBanner.vue'
