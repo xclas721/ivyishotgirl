@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { ExternalLink } from 'lucide-vue-next'
-import { getFiscalQuarter, multipliersApply } from '@/shared/fiscalQuarter'
+import { ExternalLink, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { getFiscalQuarter, multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
 import type { QuarterInfo, Quarter } from '@/shared/fiscalQuarter'
 import type { BonusRecord, CustomerType } from '@/lib/db'
 import {
@@ -466,6 +466,17 @@ function csvCell(value: unknown) {
   return `"${String(value ?? '').replace(/"/g, '""')}"`
 }
 
+function isFilteredQuarter(key: string) {
+  if (!key || (selectedYear.value === 'all' && selectedQuarter.value === 'all')) return false
+  const match = /^(\d{4})-(Q[1-4])$/.exec(key)
+  if (!match) return false
+  const year = Number(match[1])
+  const quarter = match[2] as Quarter
+  const yearOk = selectedYear.value === 'all' || selectedYear.value === year
+  const quarterOk = selectedQuarter.value === 'all' || selectedQuarter.value === quarter
+  return yearOk && quarterOk
+}
+
 function downloadFile(filename: string, content: string, type: string) {
   const blob = new Blob([content], { type })
   const url = URL.createObjectURL(blob)
@@ -578,35 +589,56 @@ npm start
     </section>
 
     <section class="panel">
-      <h2>A. 回簽季度試算統計</h2>
+      <div class="quarter-section-head">
+        <div>
+          <p class="quarter-section-tag">依回簽月份</p>
+          <h2>回簽季度試算</h2>
+          <p class="quarter-section-desc">
+            這一季<strong>簽了哪些案</strong>、業績與倍率加總後的<strong>應計獎金</strong>。獎金%與倍率都看回簽季度。
+          </p>
+        </div>
+      </div>
       <div v-if="summary.signed.length === 0" class="empty">尚無回簽季度資料</div>
       <div v-else class="quarter-grid">
-        <article v-for="item in summary.signed" :key="item.key" class="quarter-card">
-          <header>
-            <div>
-              <h3>{{ item.key }}</h3>
-              <p>{{ item.range }}，{{ item.count }} 筆回簽</p>
+        <article
+          v-for="item in summary.signed"
+          :key="item.key"
+          class="quarter-card quarter-card--signed"
+          :class="{ 'is-filtered': isFilteredQuarter(item.key) }"
+        >
+          <div class="quarter-card-top">
+            <span class="quarter-badge">{{ item.key }}</span>
+            <span class="quarter-meta">{{ item.range }} · {{ item.count }} 筆回簽</span>
+          </div>
+          <div class="quarter-hero">
+            <span class="quarter-hero-label">應計獎金</span>
+            <strong
+              class="quarter-hero-amount"
+              :class="{ 'is-muted': !multipliersApply(item.key) }"
+            >
+              {{ multipliersApply(item.key) ? money.format(item.final) : '無法計算' }}
+            </strong>
+            <p v-if="!multipliersApply(item.key)" class="quarter-hero-note">
+              倍率自 {{ MULTIPLIER_START_KEY }} 起適用
+            </p>
+          </div>
+          <div v-if="multipliersApply(item.key)" class="quarter-breakdown">
+            <div class="quarter-breakdown-row">
+              <span>簽約未連稅合計</span>
+              <b>{{ money.format(item.taxExcludedAmount) }}</b>
             </div>
-            <strong>{{
-              multipliersApply(item.key) ? money.format(item.final) : '無法計算'
-            }}</strong>
-          </header>
-          <div class="quarter-lines">
-            <div>
-              <span>簽約總未連稅金額</span><b>{{ money.format(item.taxExcludedAmount) }}</b>
+            <div class="quarter-breakdown-row">
+              <span>基礎獎金小計</span>
+              <b>{{ money.format(item.base) }}</b>
             </div>
-            <div>
-              <span>基礎獎金小計</span><b>{{ money.format(item.base) }}</b>
-            </div>
-            <div>
-              <span>倍率</span
-              ><b>{{
-                multipliersApply(item.key) ? formatMultiplier(multiplierFor(item.key)) : '無倍率'
-              }}</b>
-            </div>
-            <div>
-              <span>應計獎金試算</span
-              ><b>{{ multipliersApply(item.key) ? money.format(item.final) : '無法計算' }}</b>
+            <div class="quarter-breakdown-row">
+              <span>季度倍率</span>
+              <b
+                class="quarter-mult"
+                :title="formatMultiplier(multiplierFor(item.key))"
+              >
+                ×{{ formatNumber(combinedMultiplier(multiplierFor(item.key))) }}
+              </b>
             </div>
           </div>
         </article>
@@ -614,26 +646,44 @@ npm start
     </section>
 
     <section class="panel">
-      <h2>B. 發放季度實領統計</h2>
+      <div class="quarter-section-head">
+        <div>
+          <p class="quarter-section-tag">依收款月份</p>
+          <h2>發放季度實領</h2>
+          <p class="quarter-section-desc">
+            這一季<strong>實際入帳</strong>會領到多少。金額仍依各案的回簽季度計算，只是按收款時間歸類。
+          </p>
+        </div>
+      </div>
       <div v-if="summary.paid.length === 0" class="empty">尚無發放季度資料</div>
       <div v-else class="quarter-grid">
-        <article v-for="item in summary.paid" :key="item.key" class="quarter-card">
-          <header>
-            <div>
-              <h3>{{ item.key }}</h3>
-              <p>{{ item.range }}，{{ item.count }} 筆收款</p>
-            </div>
-            <strong>{{ item.computableCount > 0 ? money.format(item.final) : '無法計算' }}</strong>
-          </header>
-          <div class="quarter-lines">
-            <div>
-              <span>實際領取獎金總額</span
-              ><b>{{ item.computableCount > 0 ? money.format(item.final) : '無法計算' }}</b>
-            </div>
-            <div v-if="item.count > item.computableCount" class="hint">
-              其中 {{ item.count - item.computableCount }} 筆為無倍率季度（未計入）
-            </div>
+        <article
+          v-for="item in summary.paid"
+          :key="item.key"
+          class="quarter-card quarter-card--paid"
+          :class="{ 'is-filtered': isFilteredQuarter(item.key) }"
+        >
+          <div class="quarter-card-top">
+            <span class="quarter-badge">{{ item.key }}</span>
+            <span class="quarter-meta">{{ item.range }} · {{ item.count }} 筆收款</span>
           </div>
+          <div class="quarter-hero">
+            <span class="quarter-hero-label">實領獎金</span>
+            <strong
+              class="quarter-hero-amount"
+              :class="{ 'is-muted': item.computableCount === 0 }"
+            >
+              {{ item.computableCount > 0 ? money.format(item.final) : '無法計算' }}
+            </strong>
+          </div>
+          <p class="quarter-footnote">
+            <template v-if="item.computableCount > 0">{{ item.computableCount }} 筆計入</template>
+            <template v-if="item.count > item.computableCount">
+              <span v-if="item.computableCount > 0"> · </span>
+              {{ item.count - item.computableCount }} 筆無倍率未計入
+            </template>
+            <template v-if="item.computableCount === 0 && item.count > 0"> 皆為無倍率季度</template>
+          </p>
         </article>
       </div>
     </section>
@@ -806,21 +856,40 @@ npm start
                 <span v-else class="muted-cell">無法計算</span>
               </td>
               <td class="actions-cell">
-                <button
-                  class="secondary"
-                  type="button"
-                  :disabled="isFileMode || isSyncing(record.id) || isSyncingAll"
-                  @click="resyncRecord(record)"
-                >
-                  {{ isSyncing(record.id) ? '同步中…' : '再同步' }}
-                </button>
-                <button class="danger" type="button" @click="deleteRecord(record.id)">刪除</button>
+                <div class="table-actions">
+                  <button
+                    class="table-action"
+                    type="button"
+                    :disabled="isFileMode || isSyncing(record.id) || isSyncingAll"
+                    @click="resyncRecord(record)"
+                  >
+                    <RefreshCw :size="13" :stroke-width="2" :class="{ spinning: isSyncing(record.id) }" />
+                    <span>{{ isSyncing(record.id) ? '同步中…' : '再同步' }}</span>
+                  </button>
+                  <button
+                    class="table-action table-action-danger"
+                    type="button"
+                    :disabled="isSyncingAll"
+                    @click="deleteRecord(record.id)"
+                  >
+                    <Trash2 :size="13" :stroke-width="2" />
+                    <span>刪除</span>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="notice">1 月會歸到前一年度 Q4。若同一網址重複新增，會更新原本那筆資料。</div>
+      <div class="notice">
+        <ul class="notice-list">
+          <li>1 月會歸到前一年度 Q4。</li>
+          <li>若同一網址重複新增，會更新原本那筆資料。</li>
+          <li>
+            倍率與最終獎金自 {{ MULTIPLIER_START_KEY }} 起適用，此前季度無法計算。
+          </li>
+        </ul>
+      </div>
     </section>
   </main>
 </template>

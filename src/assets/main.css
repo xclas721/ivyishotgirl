@@ -25,6 +25,7 @@
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', 'Noto Sans TC',
     sans-serif;
+  --layout-content-max: 1520px;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -413,7 +414,7 @@
   .app-shell {
     display: grid;
     gap: 14px;
-    width: min(1400px, calc(100% - 40px));
+    width: min(var(--layout-content-max), calc(100% - 40px));
     margin: 32px auto 56px;
   }
 
@@ -614,7 +615,42 @@
     line-height: 1.4;
   }
 
-  /* Quarter cards */
+  /* Quarter stats */
+  .quarter-section-head {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .quarter-section-tag {
+    margin: 0 0 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-copper);
+  }
+
+  .quarter-section-head h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .quarter-section-desc {
+    margin: 0;
+    max-width: 52em;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--color-muted);
+  }
+
+  .quarter-section-desc strong {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
   .quarter-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -623,7 +659,7 @@
 
   .quarter-card {
     display: grid;
-    gap: 12px;
+    gap: 14px;
     border: 1px solid rgba(255, 255, 255, 0.55);
     border-radius: 10px;
     padding: 16px;
@@ -631,6 +667,126 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
   }
 
+  .quarter-card--signed {
+    border-left: 3px solid rgba(168, 113, 46, 0.45);
+  }
+
+  .quarter-card--paid {
+    border-left: 3px solid rgba(26, 106, 79, 0.35);
+  }
+
+  .quarter-card.is-filtered {
+    border-color: rgba(168, 113, 46, 0.28);
+    background: rgba(168, 113, 46, 0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 0 0 1px rgba(168, 113, 46, 0.12);
+  }
+
+  .quarter-card-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .quarter-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 2px 9px;
+    border-radius: 6px;
+    background: rgba(168, 113, 46, 0.1);
+    color: var(--color-copper-dark);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .quarter-card--paid .quarter-badge {
+    background: rgba(26, 106, 79, 0.08);
+    color: var(--color-success);
+  }
+
+  .quarter-meta {
+    font-size: 12px;
+    color: var(--color-muted);
+  }
+
+  .quarter-hero {
+    display: grid;
+    gap: 4px;
+  }
+
+  .quarter-hero-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .quarter-hero-amount {
+    font-family: var(--font-sans);
+    font-size: 24px;
+    font-weight: 200;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.04em;
+    color: var(--color-ink);
+  }
+
+  .quarter-hero-amount.is-muted {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-muted);
+    letter-spacing: -0.01em;
+  }
+
+  .quarter-hero-note {
+    margin: 0;
+    font-size: 12px;
+    color: var(--color-muted);
+  }
+
+  .quarter-breakdown {
+    display: grid;
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 7px;
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .quarter-breakdown-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 7px 12px;
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    align-items: center;
+  }
+
+  .quarter-breakdown-row b {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .quarter-mult {
+    color: var(--color-copper);
+    cursor: help;
+  }
+
+  .quarter-footnote {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--color-muted);
+  }
+
+  /* Legacy quarter card header/lines — used by multipliers page */
   .quarter-card header {
     display: flex;
     justify-content: space-between;
@@ -724,11 +880,13 @@
   /* Table */
   .table-wrap {
     overflow-x: auto;
+    margin-inline: -8px;
+    padding-inline: 8px;
   }
 
   table {
     width: 100%;
-    min-width: 1180px;
+    min-width: 1240px;
     border-collapse: separate;
     border-spacing: 0;
     border: 1px solid rgba(0, 0, 0, 0.06);
@@ -739,7 +897,7 @@
 
   th,
   td {
-    padding: 9px 12px;
+    padding: 8px 10px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     text-align: left;
     vertical-align: top;
@@ -820,32 +978,82 @@
     text-decoration: underline;
   }
 
-  /* Keep the action buttons pinned to the right edge while the wide table
-     scrolls horizontally, so 再同步 / 刪除 stay reachable. */
+  /* Keep actions reachable while the wide table scrolls horizontally. */
   th:last-child,
   td.actions-cell {
     position: sticky;
     right: 0;
     white-space: nowrap;
     text-align: right;
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
   }
 
   th:last-child {
-    background: #f3f2ef;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 1;
   }
 
   td.actions-cell {
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: -8px 0 12px -8px rgba(0, 0, 0, 0.14);
+    background: rgba(255, 255, 255, 0.72);
+    vertical-align: middle;
   }
 
   tr:hover td.actions-cell {
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(255, 255, 255, 0.88);
   }
 
-  td.actions-cell button + button {
-    margin-left: 6px;
+  .table-actions {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .table-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 0;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition:
+      color 0.12s,
+      background 0.12s;
+  }
+
+  .table-action:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--color-copper);
+    transform: none;
+  }
+
+  .table-action-danger:hover:not(:disabled) {
+    background: rgba(165, 40, 40, 0.06);
+    color: var(--color-danger);
+  }
+
+  .table-action:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .table-action .spinning {
+    animation: table-action-spin 0.8s linear infinite;
+  }
+
+  @keyframes table-action-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   td input {
@@ -853,6 +1061,18 @@
     padding: 4px 8px;
     font-size: 13px;
     background: rgba(255, 255, 255, 0.9);
+  }
+
+  td input[type='month'] {
+    width: 100%;
+    max-width: 132px;
+    min-width: 0;
+  }
+
+  td input[type='number'] {
+    width: 100%;
+    max-width: 108px;
+    min-width: 0;
   }
 
   /* Type pill */
@@ -900,6 +1120,13 @@
     color: var(--color-copper-dark);
     padding-left: 14px;
     border-radius: 0 8px 8px 0;
+  }
+
+  .notice-list {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 6px;
   }
 
   /* DB loading / error */
@@ -1178,7 +1405,7 @@
   /* ③≤620px: small mobile — single column, tighter */
   @media (max-width: 620px) {
     .app-shell {
-      width: min(100% - 24px, 680px);
+      width: min(calc(100% - 24px), 680px);
       margin-top: 20px;
       margin-bottom: 40px;
     }
