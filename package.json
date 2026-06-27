@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "start": "node server.js",
-    "start:pw": "USE_PLAYWRIGHT=1 node server.js",
+    "dev": "vite --port 3000",
+    "start": "run-p start:api start:fe",
+    "start:api": "python -m uvicorn api.index:app --reload --port 8000",
+    "start:fe": "vite --port 3000",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -16,8 +17,6 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.1",
-    "cheerio": "^1.2.0",
-    "express": "^5.2.1",
     "tailwindcss": "^4.3.1",
     "vue": "^3.5.38"
   },
