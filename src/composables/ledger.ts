@@ -11,6 +11,11 @@ export const quarterMultipliers = ref<Record<string, QuarterMultiplier>>({})
 export const isLoading = ref(true)
 export const dbError = ref('')
 
+// Year filter, shared across pages. 'all' shows everything; otherwise only the
+// data whose 回簽 (signed) fiscal year matches. Defaults to the latest year once
+// data loads.
+export const selectedYear = ref<number | 'all'>('all')
+
 export const isFileMode = typeof window !== 'undefined' && window.location.protocol === 'file:'
 
 let loadPromise: Promise<void> | null = null
@@ -28,6 +33,9 @@ export function ensureLoaded() {
       const [recs, mults] = await Promise.all([db.fetchRecords(), db.fetchMultipliers()])
       records.value = recs
       quarterMultipliers.value = mults
+      // Default to the most recent year so the view isn't flooded with history.
+      const latestYear = multiplierYears.value[0]
+      if (latestYear) selectedYear.value = latestYear
     } catch (err) {
       loadPromise = null
       console.error('[db] load failed', err)
@@ -134,6 +142,20 @@ export const multiplierYears = computed(() => {
   })
   return Array.from(years).sort((a, b) => b - a)
 })
+
+// Records limited to the selected 回簽 year (or all of them).
+export const visibleRecords = computed(() =>
+  selectedYear.value === 'all'
+    ? records.value
+    : records.value.filter((r) => getFiscalQuarter(r.signedMonth).year === selectedYear.value),
+)
+
+// Year blocks to render on the multipliers page given the filter.
+export const displayedYears = computed(() =>
+  selectedYear.value === 'all'
+    ? multiplierYears.value
+    : multiplierYears.value.filter((y) => y === selectedYear.value),
+)
 
 // ---------- multipliers ----------
 

@@ -6,6 +6,9 @@ import type { QuarterInfo } from '@/shared/fiscalQuarter'
 import type { BonusRecord, CustomerType } from '@/lib/db'
 import {
   records,
+  visibleRecords,
+  selectedYear,
+  multiplierYears,
   quarterMultipliers,
   isLoading,
   dbError,
@@ -299,7 +302,7 @@ function summarize() {
   const paid = new Map<string, QuarterSummary>()
   const totals = { final: 0, taxExcludedAmount: 0, taxIncludedAmount: 0, uncomputableCount: 0 }
 
-  records.value.forEach((record) => {
+  visibleRecords.value.forEach((record) => {
     const signedQuarter = getFiscalQuarter(record.signedMonth)
     const paidQuarter = getFiscalQuarter(record.paidMonth)
     // Pre-cutoff quarters have no multiplier system, so the final bonus is
@@ -457,7 +460,16 @@ function downloadFile(filename: string, content: string, type: string) {
           回簽月份決定獎金%與倍率，收款月份決定實際發放季度。金額以報價單「未連稅金額」與「總計」為準。
         </p>
       </div>
-      <span v-if="apiOk" class="badge ok">API 已連線</span>
+      <div class="head-controls">
+        <label v-if="multiplierYears.length" class="year-filter">
+          年度
+          <select v-model="selectedYear">
+            <option value="all">全部</option>
+            <option v-for="year in multiplierYears" :key="year" :value="year">{{ year }}</option>
+          </select>
+        </label>
+        <span v-if="apiOk" class="badge ok">API 已連線</span>
+      </div>
     </header>
 
     <section class="panel">
@@ -520,7 +532,7 @@ npm start
         </div>
         <div class="total">
           <span>紀錄筆數</span>
-          <strong>{{ integer.format(records.length) }}</strong>
+          <strong>{{ integer.format(visibleRecords.length) }}</strong>
         </div>
       </div>
     </section>
@@ -588,8 +600,12 @@ npm start
 
     <section class="panel">
       <h2>報價單紀錄</h2>
-      <div v-if="records.length === 0" class="empty">
-        尚無報價單紀錄。輸入網址、回簽月份與收款月份後，按「抓取報價單」新增。
+      <div v-if="visibleRecords.length === 0" class="empty">
+        {{
+          records.length === 0
+            ? '尚無報價單紀錄。輸入網址、回簽月份與收款月份後，按「抓取報價單」新增。'
+            : '此年度尚無報價單紀錄。可切換上方年度，或選「全部」。'
+        }}
       </div>
       <div v-else class="table-wrap">
         <table>
@@ -612,7 +628,7 @@ npm start
           </thead>
           <tbody>
             <tr
-              v-for="record in [...records].sort((a, b) =>
+              v-for="record in [...visibleRecords].sort((a, b) =>
                 (b.paidMonth || '').localeCompare(a.paidMonth || ''),
               )"
               :key="record.id"

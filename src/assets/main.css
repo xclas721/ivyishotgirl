@@ -433,6 +433,31 @@
     letter-spacing: -0.005em;
   }
 
+  .head-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .year-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+
+  .year-filter select {
+    min-height: 32px;
+    padding: 4px 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+    color: var(--color-ink);
+  }
+
   /* Badge */
   .badge {
     display: inline-flex;
