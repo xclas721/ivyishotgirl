@@ -764,6 +764,10 @@
     text-align: right;
   }
 
+  td.actions-cell button + button {
+    margin-left: 6px;
+  }
+
   td input {
     min-height: 32px;
     padding: 4px 8px;

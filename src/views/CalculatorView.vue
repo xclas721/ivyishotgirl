@@ -1,9 +1,33 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getFiscalQuarter } from '@/shared/fiscalQuarter'
-import type { Quarter, QuarterInfo } from '@/shared/fiscalQuarter'
+import type { QuarterInfo } from '@/shared/fiscalQuarter'
 import * as db from '@/lib/db'
-import type { BonusRecord, CustomerType, QuarterMultiplier } from '@/lib/db'
+import type { BonusRecord, CustomerType } from '@/lib/db'
+import {
+  records,
+  quarterMultipliers,
+  isLoading,
+  dbError,
+  isFileMode,
+  ensureLoaded,
+  persistToDb,
+  upsertRecord,
+  updateRecord,
+  removeRecord,
+  clearAll,
+  ensureMultiplier,
+  multiplierFor,
+  defaultMultiplier,
+  normalizeMultipliers,
+  normalizeRecord,
+  isDefaultMultiplier,
+  formatMultiplier,
+  multiplierSummary,
+  toNumber,
+  canonicalUrl,
+  currentMonth,
+} from '@/composables/ledger'
 
 interface QuoteResponse {
   quoteUrl?: string
@@ -27,18 +51,6 @@ interface QuarterSummary extends QuarterInfo {
   taxExcludedAmount: number
 }
 
-const multiplierFields: (keyof QuarterMultiplier)[] = [
-  'rocket',
-  'repurchase',
-  'avgOrder',
-  'yieldRate',
-]
-const multiplierFieldLabels: Record<keyof QuarterMultiplier, string> = {
-  rocket: '業績火箭倍率',
-  repurchase: '回購倍率',
-  avgOrder: '客單價倍率',
-  yieldRate: '成材率倍率',
-}
 const money = new Intl.NumberFormat('zh-TW', {
   style: 'currency',
   currency: 'TWD',
@@ -49,56 +61,27 @@ const integer = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 })
 const quoteUrl = ref('')
 const signedMonth = ref('')
 const paidMonth = ref(currentMonth())
-const newYear = ref('')
 const status = reactive({ message: '', tone: '' })
 const isFetching = ref(false)
-const isLoading = ref(true)
-const dbError = ref('')
 const apiOk = ref(false)
 const importFile = ref<HTMLInputElement | null>(null)
-const records = ref<BonusRecord[]>([])
-const quarterMultipliers = ref<Record<string, QuarterMultiplier>>({})
+const syncingIds = ref<Set<string>>(new Set())
 
-const isFileMode = computed(() => window.location.protocol === 'file:')
-const multiplierYears = computed(() => {
-  const years = new Set<number>()
-  Object.keys(quarterMultipliers.value).forEach((key) => {
-    const year = key.match(/^(\d{4})-Q[1-4]$/)?.[1]
-    if (year) years.add(Number(year))
-  })
-  records.value.forEach((record) => {
-    const year = getFiscalQuarter(record.signedMonth).year
-    if (year) years.add(year)
-  })
-  return Array.from(years).sort((a, b) => b - a)
-})
 const summary = computed(() => summarize())
 
 onMounted(async () => {
-  isLoading.value = true
-  if (!isFileMode.value) {
-    try {
-      const [recs, mults] = await Promise.all([db.fetchRecords(), db.fetchMultipliers()])
-      records.value = recs
-      quarterMultipliers.value = mults
-    } catch (err) {
-      console.error('[db] load failed', err)
-      dbError.value = '無法讀取資料庫，請確認 Supabase 設定（.env.local）正確。'
-      showStatus('資料庫讀取失敗。', 'error')
-    }
-    void checkApiHealth()
-  } else {
+  if (isFileMode) {
     showStatus('請先用 http://localhost:3000 開啟後再抓取報價單。', '')
+    void ensureLoaded()
+    return
   }
-  isLoading.value = false
+  try {
+    await ensureLoaded()
+  } catch {
+    showStatus('資料庫讀取失敗。', 'error')
+  }
+  void checkApiHealth()
 })
-
-function persistToDb(fn: () => Promise<void>) {
-  fn().catch((err) => {
-    console.error('[db]', err)
-    dbError.value = '資料同步失敗，請確認網路連線。'
-  })
-}
 
 async function checkApiHealth() {
   try {
@@ -119,7 +102,7 @@ async function checkApiHealth() {
 }
 
 async function fetchQuote() {
-  if (isFileMode.value) {
+  if (isFileMode) {
     showStatus('請先用 http://localhost:3000 開啟後再抓取報價單。', '')
     return
   }
@@ -140,47 +123,20 @@ async function fetchQuote() {
   showStatus('正在抓取報價單...')
 
   try {
-    const response = await fetch('/api/fetch-quote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: inputUrl }),
-    })
-    const data = await response.json().catch(() => null)
-    if (!response.ok || !data?.ok) {
-      const detail = data?.detail || data?.message || `HTTP ${response.status}`
-      const type = data?.errorType ? `（${data.errorType}）` : ''
-      throw new Error(`${detail}${type}`)
-    }
-
-    const quote = data.quote as QuoteResponse
+    const quote = await requestQuote(inputUrl)
     const finalSignedMonth = signedMonth.value || quote.signedMonth || ''
-    upsertRecord({
-      id: canonicalUrl(quote.quoteUrl || inputUrl),
-      quoteUrl: quote.quoteUrl || inputUrl,
-      orderNo: quote.orderNo || '',
-      customerName: quote.customerName || '',
-      customerType: quote.customerType || 'unknown',
-      taxExcludedAmount: Number(quote.taxExcludedAmount || 0),
-      taxIncludedAmount: Number(quote.taxIncludedAmount || 0),
-      signedMonth: finalSignedMonth,
-      paidMonth: paidMonth.value,
-      baseCommissionRate: Number(quote.defaultCommissionRate || 4),
-      amountInferred: Boolean(quote.amountInferred),
-      amountDebug: quote.amountDebug || {},
-      signedAtText: quote.signedAtText || '',
-      updatedAt: new Date().toISOString(),
-    })
+    upsertRecord(
+      applyQuoteToRecord(quote, {
+        id: canonicalUrl(quote.quoteUrl || inputUrl),
+        quoteUrl: quote.quoteUrl || inputUrl,
+        signedMonth: finalSignedMonth,
+        paidMonth: paidMonth.value,
+      }),
+    )
 
     quoteUrl.value = ''
     signedMonth.value = ''
-    const warnings = []
-    if (!finalSignedMonth) warnings.push('未抓到回簽月份，請手動選擇')
-    if (quote.customerType === 'unknown') warnings.push('客戶類型無法判斷，請確認獎金%')
-    if (quote.amountInferred) warnings.push('金額為系統反推，請確認')
-    showStatus(
-      warnings.length ? `已新增，但${warnings.join('、')}。` : '已新增或更新報價單。',
-      warnings.length ? 'error' : 'ok',
-    )
+    showStatus(...quoteResultMessage(quote, finalSignedMonth, '已新增'))
   } catch (error) {
     showStatus(`抓取失敗：${friendlyFetchError(error)}`, 'error')
   } finally {
@@ -188,103 +144,108 @@ async function fetchQuote() {
   }
 }
 
-function upsertRecord(record: BonusRecord) {
-  const normalized = normalizeRecord(record)
-  if (!normalized) return
-  const qKey = getFiscalQuarter(normalized.signedMonth).key
-  const isNewKey = ensureMultiplier(qKey)
-  const index = records.value.findIndex(
-    (item) => canonicalUrl(item.quoteUrl) === canonicalUrl(normalized.quoteUrl),
-  )
-  if (index >= 0) records.value[index] = { ...records.value[index], ...normalized }
-  else records.value.push(normalized)
-  persistToDb(() => db.upsertRecord(normalized))
-  if (qKey && isNewKey) persistToDb(() => db.upsertMultiplier(qKey, quarterMultipliers.value[qKey] ?? defaultMultiplier()))
-}
+// Re-fetch an existing record from its stored URL, refreshing the quote data
+// while keeping the user-set 回簽/收款月份.
+async function resyncRecord(record: BonusRecord) {
+  if (isFileMode) {
+    showStatus('請先用 http://localhost:3000 開啟後再同步。', '')
+    return
+  }
+  const inputUrl = record.quoteUrl?.trim()
+  if (!inputUrl) return showStatus('此紀錄沒有可同步的網址。', 'error')
 
-function normalizeRecord(record: Partial<BonusRecord>): BonusRecord | null {
-  if (!record || !record.quoteUrl) return null
-  return {
-    id: record.id || canonicalUrl(record.quoteUrl),
-    quoteUrl: String(record.quoteUrl || '').trim(),
-    orderNo: String(record.orderNo || ''),
-    customerName: String(record.customerName || ''),
-    customerType: ['company', 'personal', 'unknown'].includes(String(record.customerType))
-      ? record.customerType || 'unknown'
-      : 'unknown',
-    taxExcludedAmount: toNumber(record.taxExcludedAmount),
-    taxIncludedAmount: toNumber(record.taxIncludedAmount),
-    signedMonth: String(record.signedMonth || '').slice(0, 7),
-    paidMonth: String(record.paidMonth || currentMonth()).slice(0, 7),
-    baseCommissionRate: toNumber(record.baseCommissionRate || 4),
-    amountInferred: Boolean(record.amountInferred),
-    amountDebug: record.amountDebug || {},
-    signedAtText: String(record.signedAtText || ''),
-    updatedAt: record.updatedAt || new Date().toISOString(),
+  setSyncing(record.id, true)
+  showStatus(`正在同步 ${record.orderNo || inputUrl}...`)
+
+  try {
+    const quote = await requestQuote(inputUrl)
+    const finalSignedMonth = record.signedMonth || quote.signedMonth || ''
+    upsertRecord(
+      applyQuoteToRecord(quote, {
+        id: record.id,
+        quoteUrl: record.quoteUrl,
+        signedMonth: finalSignedMonth,
+        paidMonth: record.paidMonth,
+      }),
+    )
+    showStatus(...quoteResultMessage(quote, finalSignedMonth, '已重新同步'))
+  } catch (error) {
+    showStatus(`同步失敗：${friendlyFetchError(error)}`, 'error')
+  } finally {
+    setSyncing(record.id, false)
   }
 }
 
-function ensureMultiplier(key: string): boolean {
-  if (!key) return false
-  if (quarterMultipliers.value[key]) return false
-  quarterMultipliers.value[key] = normalizeMultiplier()
-  return true
-}
-
-function multiplierFor(key: string): QuarterMultiplier {
-  if (!key) return defaultMultiplier()
-  return quarterMultipliers.value[key] || defaultMultiplier()
-}
-
-function updateMultiplier(key: string, field: keyof QuarterMultiplier, value: string | number) {
-  ensureMultiplier(key)
-  const multiplier = quarterMultipliers.value[key] || defaultMultiplier()
-  multiplier[field] = Math.max(0, toNumber(value))
-  quarterMultipliers.value[key] = multiplier
-  persistToDb(() => db.upsertMultiplier(key, multiplier))
-}
-
-function commitAddYear() {
-  const year = newYear.value.trim()
-  if (!/^\d{4}$/.test(year)) return showStatus('年份格式需為 YYYY。', 'error')
-  const newMults: Record<string, QuarterMultiplier> = {}
-  ;(['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]).forEach((quarter) => {
-    const key = `${year}-${quarter}`
-    ensureMultiplier(key)
-    newMults[key] = quarterMultipliers.value[key] ?? defaultMultiplier()
+async function requestQuote(inputUrl: string): Promise<QuoteResponse> {
+  const response = await fetch('/api/fetch-quote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: inputUrl }),
   })
-  persistToDb(() => db.upsertMultipliers(newMults))
-  showStatus(`已新增 ${year} 年 Q1-Q4 倍率設定。`, 'ok')
-  newYear.value = ''
+  const data = await response.json().catch(() => null)
+  if (!response.ok || !data?.ok) {
+    const detail = data?.detail || data?.message || `HTTP ${response.status}`
+    const type = data?.errorType ? `（${data.errorType}）` : ''
+    throw new Error(`${detail}${type}`)
+  }
+  return data.quote as QuoteResponse
 }
 
-function updateRecord(record: BonusRecord, field: keyof BonusRecord, value: string | number) {
-  if (['taxIncludedAmount', 'taxExcludedAmount', 'baseCommissionRate'].includes(field)) {
-    ;(record[field] as number) = Math.max(0, toNumber(value))
-  } else {
-    ;(record[field] as string) = String(value)
+function applyQuoteToRecord(
+  quote: QuoteResponse,
+  base: { id: string; quoteUrl: string; signedMonth: string; paidMonth: string },
+): BonusRecord {
+  return {
+    id: base.id,
+    quoteUrl: quote.quoteUrl || base.quoteUrl,
+    orderNo: quote.orderNo || '',
+    customerName: quote.customerName || '',
+    customerType: quote.customerType || 'unknown',
+    taxExcludedAmount: Number(quote.taxExcludedAmount || 0),
+    taxIncludedAmount: Number(quote.taxIncludedAmount || 0),
+    signedMonth: base.signedMonth,
+    paidMonth: base.paidMonth,
+    baseCommissionRate: Number(quote.defaultCommissionRate || 4),
+    amountInferred: Boolean(quote.amountInferred),
+    amountDebug: quote.amountDebug || {},
+    signedAtText: quote.signedAtText || '',
+    updatedAt: new Date().toISOString(),
   }
-  if (field === 'signedMonth') {
-    const qKey = getFiscalQuarter(record.signedMonth).key
-    const isNewKey = ensureMultiplier(qKey)
-    if (qKey && isNewKey) persistToDb(() => db.upsertMultiplier(qKey, quarterMultipliers.value[qKey] ?? defaultMultiplier()))
-  }
-  record.updatedAt = new Date().toISOString()
-  persistToDb(() => db.upsertRecord(record))
+}
+
+function quoteResultMessage(
+  quote: QuoteResponse,
+  finalSignedMonth: string,
+  verb: string,
+): [string, string] {
+  const warnings = []
+  if (!finalSignedMonth) warnings.push('未抓到回簽月份，請手動選擇')
+  if (quote.customerType === 'unknown') warnings.push('客戶類型無法判斷，請確認獎金%')
+  if (quote.amountInferred) warnings.push('金額為系統反推，請確認')
+  return warnings.length
+    ? [`${verb}，但${warnings.join('、')}。`, 'error']
+    : [`${verb}報價單。`, 'ok']
+}
+
+function setSyncing(id: string, on: boolean) {
+  const next = new Set(syncingIds.value)
+  if (on) next.add(id)
+  else next.delete(id)
+  syncingIds.value = next
+}
+
+function isSyncing(id: string) {
+  return syncingIds.value.has(id)
 }
 
 function deleteRecord(id: string) {
   if (!confirm('確定刪除這筆紀錄？')) return
-  records.value = records.value.filter((record) => record.id !== id)
-  persistToDb(() => db.deleteRecord(id))
+  removeRecord(id)
 }
 
 function clearRecords() {
   if (!confirm('確定清空全部紀錄與季度倍率設定？')) return
-  records.value = []
-  quarterMultipliers.value = {}
-  persistToDb(() => db.clearAllRecords())
-  persistToDb(() => db.clearAllMultipliers())
+  clearAll()
   showStatus('已清空紀錄。', 'ok')
 }
 
@@ -424,25 +385,6 @@ function ensureSummary(map: Map<string, QuarterSummary>, quarter: QuarterInfo) {
   }
 }
 
-function defaultMultiplier(): QuarterMultiplier {
-  return { rocket: 1, repurchase: 1, avgOrder: 1, yieldRate: 1 }
-}
-
-function normalizeMultiplier(value: Partial<QuarterMultiplier> = {}) {
-  return {
-    rocket: toNumber(value.rocket ?? 1) || 1,
-    repurchase: toNumber(value.repurchase ?? 1) || 1,
-    avgOrder: toNumber(value.avgOrder ?? 1) || 1,
-    yieldRate: toNumber(value.yieldRate ?? 1) || 1,
-  }
-}
-
-function normalizeMultipliers(source: Record<string, Partial<QuarterMultiplier>>) {
-  return Object.fromEntries(
-    Object.entries(source).map(([key, value]) => [key, normalizeMultiplier(value)]),
-  )
-}
-
 function baseCommissionFor(record: BonusRecord) {
   return (toNumber(record.taxExcludedAmount) * toNumber(record.baseCommissionRate)) / 100
 }
@@ -476,24 +418,6 @@ function amountDebugText(debug: Record<string, unknown> = {}) {
   return parts.join('；')
 }
 
-function canonicalUrl(value: unknown) {
-  try {
-    const u = new URL(String(value || '').trim())
-    return (u.hostname + u.pathname).replace(/\/+$/, '')
-  } catch {
-    return String(value || '').trim()
-  }
-}
-
-function currentMonth() {
-  return new Date().toISOString().slice(0, 7)
-}
-
-function toNumber(value: unknown) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : 0
-}
-
 function customerTypeLabel(type: CustomerType) {
   return type === 'company' ? '公司 / 設計師' : type === 'personal' ? '個人業主' : '未知'
 }
@@ -525,29 +449,6 @@ function networkDiagnostic(error: unknown) {
   if (/HTTP 404/.test(message)) return '404：找不到 /api/health，請確認 server.js 已重新啟動。'
   if (/HTTP 500/.test(message)) return '500：後端發生錯誤，請查看 npm start 的 console。'
   return message
-}
-
-function formatNumber(value: number) {
-  return Number(value || 0)
-    .toFixed(2)
-    .replace(/\.00$/, '')
-}
-
-function formatMultiplier(multiplier: QuarterMultiplier) {
-  return `火箭 ${formatNumber(multiplier.rocket)} x 回購 ${formatNumber(multiplier.repurchase)} x 客單 ${formatNumber(multiplier.avgOrder)} x 成材 ${formatNumber(multiplier.yieldRate)}`
-}
-
-function multiplierSummary(key: string, multiplier: QuarterMultiplier) {
-  return `${key || '未選回簽季度'}：${formatMultiplier(multiplier)}`
-}
-
-function isDefaultMultiplier(multiplier: QuarterMultiplier) {
-  return (
-    multiplier.rocket === 1 &&
-    multiplier.repurchase === 1 &&
-    multiplier.avgOrder === 1 &&
-    multiplier.yieldRate === 1
-  )
 }
 
 function csvCell(value: unknown) {
@@ -653,56 +554,6 @@ npm start
           <strong>{{ integer.format(records.length) }}</strong>
         </div>
       </div>
-    </section>
-
-    <section class="panel">
-      <div class="section-head">
-        <h2>季度倍率設定</h2>
-        <div class="tool-row">
-          <input
-            v-model="newYear"
-            type="text"
-            placeholder="YYYY"
-            style="width: 90px"
-            @keydown.enter="commitAddYear"
-          />
-          <button class="secondary" type="button" @click="commitAddYear">新增年份</button>
-        </div>
-      </div>
-      <div v-if="multiplierYears.length === 0" class="empty">
-        尚無年份設定。新增報價單後會依回簽季度自動出現，也可輸入年份按「新增年份」。
-      </div>
-      <div v-for="year in multiplierYears" v-else :key="year" class="year-block">
-        <h3>{{ year }}</h3>
-        <div
-          v-for="quarter in ['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]"
-          :key="`${year}-${quarter}`"
-          class="quarter-setting"
-        >
-          <strong>{{ `${year}-${quarter}` }}</strong>
-          <div class="multiplier-grid">
-            <label v-for="field in multiplierFields" :key="field">
-              {{ multiplierFieldLabels[field] }}
-              <input
-                :value="multiplierFor(`${year}-${quarter}`)[field]"
-                type="number"
-                min="0"
-                step="0.01"
-                @input="
-                  updateMultiplier(
-                    `${year}-${quarter}`,
-                    field,
-                    ($event.target as HTMLInputElement).value,
-                  )
-                "
-              />
-            </label>
-          </div>
-        </div>
-      </div>
-      <p class="hint">
-        同一回簽季度的案件共用同一組倍率；倍率存在 quarterMultipliers，不存在每筆案件裡。
-      </p>
     </section>
 
     <section class="panel">
@@ -892,6 +743,14 @@ npm start
               </td>
               <td class="bonus">{{ money.format(finalCommissionFor(record)) }}</td>
               <td class="actions-cell">
+                <button
+                  class="secondary"
+                  type="button"
+                  :disabled="isFileMode || isSyncing(record.id)"
+                  @click="resyncRecord(record)"
+                >
+                  {{ isSyncing(record.id) ? '同步中…' : '再同步' }}
+                </button>
                 <button class="danger" type="button" @click="deleteRecord(record.id)">刪除</button>
               </td>
             </tr>

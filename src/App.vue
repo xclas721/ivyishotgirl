@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import { LayoutDashboard, ScrollText } from 'lucide-vue-next'
+import { LayoutDashboard, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
 </script>
 
 <template>
@@ -15,6 +15,12 @@ import { LayoutDashboard, ScrollText } from 'lucide-vue-next'
           <RouterLink class="sidebar-link" to="/">
             <LayoutDashboard class="sidebar-icon" :size="15" :stroke-width="1.8" />
             帳本計算機
+          </RouterLink>
+        </li>
+        <li>
+          <RouterLink class="sidebar-link" to="/multipliers">
+            <SlidersHorizontal class="sidebar-icon" :size="15" :stroke-width="1.8" />
+            季度倍率
           </RouterLink>
         </li>
         <li>
