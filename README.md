@@ -1,42 +1,63 @@
-# vue-app
+# Saiens 季度獎金帳本
 
-This template should help get you started developing with Vue 3 in Vite.
+Vue + TypeScript 前端，搭配 Node.js Express proxy 抓取 Saiens 報價單資料。
 
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## 啟動
 
 ```sh
 npm install
+npm start
 ```
 
-### Compile and Hot-Reload for Development
+打開：
 
-```sh
-npm run dev
+```text
+http://localhost:3000
 ```
 
-### Type-Check, Compile and Minify for Production
+請從 `http://localhost:3000` 使用，不要直接用 `file://` 開 HTML。前端只會呼叫同源 API：
+
+```text
+GET /api/health
+POST /api/fetch-quote
+```
+
+`/api/fetch-quote` 只允許抓取 `quote.saiens.tw`，避免變成任意 proxy。
+
+## Playwright fallback
+
+如果報價單內容是 JavaScript 動態渲染，可以安裝 Playwright 後啟動 fallback：
 
 ```sh
+npm install playwright
+npx playwright install chromium
+npm run start:pw
+```
+
+## 計算規則
+
+- 報價單「未連稅金額」作為未稅獎金基準。
+- 報價單「總計」作為含稅總價。
+- 回簽月份優先從報價單底部歷史訊息、chatter、timeline 判斷，優先找「簽名 + PDF 附件 + 報價單編號」。
+- 回簽月份決定獎金%與季度倍率。
+- 收款月份決定實際發放季度。
+- 財務季度：2-4 月 Q1、5-7 月 Q2、8-10 月 Q3、11-12 月與隔年 1 月 Q4；1 月歸前一年度 Q4。
+- 季度倍率存在 `quarterMultipliers`，每筆案件只保存案件資料。
+- `localStorage` 保存 `quotes` 與 `quarterMultipliers`。
+
+## 資料操作
+
+前端保留：
+
+- 匯出 JSON
+- 匯入 JSON
+- 匯出 CSV
+- 清空紀錄
+
+## 檢查
+
+```sh
+npm run format:check
+npm run type-check
 npm run build
 ```
