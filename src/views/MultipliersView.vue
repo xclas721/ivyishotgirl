@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import { multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
 import type { Quarter } from '@/shared/fiscalQuarter'
 import type { QuarterMultiplier } from '@/lib/db'
 import {
@@ -80,9 +81,16 @@ function commitAddYear() {
           v-for="quarter in ['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]"
           :key="`${year}-${quarter}`"
           class="quarter-setting"
+          :class="{ 'no-multiplier': !multipliersApply(`${year}-${quarter}`) }"
         >
-          <strong>{{ `${year}-${quarter}` }}</strong>
-          <div class="multiplier-grid">
+          <strong>
+            {{ `${year}-${quarter}` }}
+            <span v-if="!multipliersApply(`${year}-${quarter}`)" class="no-mult-tag">無倍率</span>
+          </strong>
+          <p v-if="!multipliersApply(`${year}-${quarter}`)" class="hint">
+            此季度只計基礎獎金，不套用倍率（倍率自 {{ MULTIPLIER_START_KEY }} 起適用）。
+          </p>
+          <div v-else class="multiplier-grid">
             <label v-for="field in multiplierFields" :key="field">
               {{ multiplierFieldLabels[field] }}
               <input

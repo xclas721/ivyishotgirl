@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ExternalLink } from 'lucide-vue-next'
-import { getFiscalQuarter } from '@/shared/fiscalQuarter'
+import { getFiscalQuarter, multipliersApply } from '@/shared/fiscalQuarter'
 import type { QuarterInfo } from '@/shared/fiscalQuarter'
 import type { BonusRecord, CustomerType } from '@/lib/db'
 import {
@@ -16,7 +16,6 @@ import {
   removeRecord,
   clearAll,
   multiplierFor,
-  defaultMultiplier,
   isDefaultMultiplier,
   formatNumber,
   formatMultiplier,
@@ -269,7 +268,9 @@ function exportCsv() {
   const rows = records.value.map((record) => {
     const signedQuarter = getFiscalQuarter(record.signedMonth)
     const paidQuarter = getFiscalQuarter(record.paidMonth)
-    const multiplier = signedQuarter.key ? multiplierFor(signedQuarter.key) : defaultMultiplier()
+    const multiplierText = multipliersApply(signedQuarter.key)
+      ? multiplierSummary(signedQuarter.key, multiplierFor(signedQuarter.key))
+      : '無倍率'
     return [
       record.quoteUrl,
       record.orderNo,
@@ -282,7 +283,7 @@ function exportCsv() {
       Math.round(record.taxExcludedAmount),
       Math.round(record.taxIncludedAmount),
       record.baseCommissionRate,
-      multiplierSummary(signedQuarter.key, multiplier),
+      multiplierText,
       finalCommissionFor(record),
       record.signedAtText,
       amountDebugText(record.amountDebug),
@@ -345,7 +346,9 @@ function baseCommissionFor(record: BonusRecord) {
 
 function finalCommissionFor(record: BonusRecord) {
   const signedQuarter = getFiscalQuarter(record.signedMonth).key
-  const multiplier = signedQuarter ? multiplierFor(signedQuarter) : defaultMultiplier()
+  // Quarters before the cutoff (e.g. 2026-Q1) earn base commission only.
+  if (!multipliersApply(signedQuarter)) return Math.round(baseCommissionFor(record))
+  const multiplier = multiplierFor(signedQuarter)
   return Math.round(
     baseCommissionFor(record) *
       toNumber(multiplier.rocket || 1) *
@@ -521,7 +524,10 @@ npm start
               <span>基礎獎金小計</span><b>{{ money.format(item.base) }}</b>
             </div>
             <div>
-              <span>倍率</span><b>{{ formatMultiplier(multiplierFor(item.key)) }}</b>
+              <span>倍率</span
+              ><b>{{
+                multipliersApply(item.key) ? formatMultiplier(multiplierFor(item.key)) : '無倍率'
+              }}</b>
             </div>
             <div>
               <span>應計獎金試算</span><b>{{ money.format(item.final) }}</b>
@@ -671,28 +677,30 @@ npm start
                 />
               </td>
               <td class="mult-cell">
-                <span
-                  :title="
-                    multiplierSummary(
-                      getFiscalQuarter(record.signedMonth).key,
-                      multiplierFor(getFiscalQuarter(record.signedMonth).key),
-                    )
-                  "
-                  >×{{
-                    formatNumber(
-                      combinedMultiplier(multiplierFor(getFiscalQuarter(record.signedMonth).key)),
-                    )
-                  }}</span
-                >
-                <div
-                  v-if="
-                    getFiscalQuarter(record.signedMonth).key &&
-                    isDefaultMultiplier(multiplierFor(getFiscalQuarter(record.signedMonth).key))
-                  "
-                  class="hint"
-                >
-                  尚未設定，暫以 1
-                </div>
+                <template v-if="multipliersApply(getFiscalQuarter(record.signedMonth).key)">
+                  <span
+                    :title="
+                      multiplierSummary(
+                        getFiscalQuarter(record.signedMonth).key,
+                        multiplierFor(getFiscalQuarter(record.signedMonth).key),
+                      )
+                    "
+                    >×{{
+                      formatNumber(
+                        combinedMultiplier(multiplierFor(getFiscalQuarter(record.signedMonth).key)),
+                      )
+                    }}</span
+                  >
+                  <div
+                    v-if="
+                      isDefaultMultiplier(multiplierFor(getFiscalQuarter(record.signedMonth).key))
+                    "
+                    class="hint"
+                  >
+                    尚未設定，暫以 1
+                  </div>
+                </template>
+                <span v-else class="muted-cell">無倍率</span>
               </td>
               <td class="bonus">{{ money.format(finalCommissionFor(record)) }}</td>
               <td class="actions-cell">

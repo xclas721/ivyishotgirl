@@ -8,6 +8,25 @@ export interface QuarterInfo {
   order: number
 }
 
+// Quarter multipliers only apply from this fiscal quarter onward. Anything
+// before it (e.g. 2026-Q1 and earlier) earns base commission with no multiplier.
+export const MULTIPLIER_START_KEY = '2026-Q2'
+
+function quarterKeyOrder(key: string): number {
+  const match = /^(\d{4})-Q([1-4])$/.exec(key)
+  if (!match) return 0
+  return Number(match[1]) * 10 + Number(match[2])
+}
+
+const MULTIPLIER_START_ORDER = quarterKeyOrder(MULTIPLIER_START_KEY)
+
+// True when the given quarter key (e.g. "2026-Q2") is at or after the cutoff
+// where multipliers take effect.
+export function multipliersApply(key: string): boolean {
+  const order = quarterKeyOrder(key)
+  return order > 0 && order >= MULTIPLIER_START_ORDER
+}
+
 export function getFiscalQuarter(monthString: string): QuarterInfo {
   if (!/^\d{4}-\d{2}$/.test(String(monthString || '')))
     return { year: 0, quarter: '', key: '', range: '', order: 0 }
