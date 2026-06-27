@@ -409,10 +409,6 @@
    Components
 ────────────────────────────────────────────────────────── */
 @layer components {
-  .hidden {
-    display: none;
-  }
-
   /* Layout */
   .app-shell {
     display: grid;

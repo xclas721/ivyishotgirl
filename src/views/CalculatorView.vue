@@ -2,7 +2,6 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getFiscalQuarter } from '@/shared/fiscalQuarter'
 import type { QuarterInfo } from '@/shared/fiscalQuarter'
-import * as db from '@/lib/db'
 import type { BonusRecord, CustomerType } from '@/lib/db'
 import {
   records,
@@ -11,16 +10,12 @@ import {
   dbError,
   isFileMode,
   ensureLoaded,
-  persistToDb,
   upsertRecord,
   updateRecord,
   removeRecord,
   clearAll,
-  ensureMultiplier,
   multiplierFor,
   defaultMultiplier,
-  normalizeMultipliers,
-  normalizeRecord,
   isDefaultMultiplier,
   formatMultiplier,
   multiplierSummary,
@@ -64,7 +59,6 @@ const paidMonth = ref(currentMonth())
 const status = reactive({ message: '', tone: '' })
 const isFetching = ref(false)
 const apiOk = ref(false)
-const importFile = ref<HTMLInputElement | null>(null)
 const syncingIds = ref<Set<string>>(new Set())
 
 const summary = computed(() => summarize())
@@ -247,51 +241,6 @@ function clearRecords() {
   if (!confirm('確定清空全部紀錄與季度倍率設定？')) return
   clearAll()
   showStatus('已清空紀錄。', 'ok')
-}
-
-function exportJson() {
-  downloadFile(
-    'saiens-bonus-records.json',
-    JSON.stringify(
-      { quotes: records.value, quarterMultipliers: quarterMultipliers.value },
-      null,
-      2,
-    ),
-    'application/json;charset=utf-8',
-  )
-}
-
-async function importJson(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  ;(event.target as HTMLInputElement).value = ''
-  if (!file) return
-
-  try {
-    const parsed = JSON.parse(await file.text())
-    const importedRecords = Array.isArray(parsed) ? parsed : parsed.quotes || parsed.records
-    if (!Array.isArray(importedRecords)) throw new Error('JSON 格式不正確。')
-    importedRecords.forEach((record) => {
-      const normalized = normalizeRecord(record)
-      if (!normalized) return
-      const index = records.value.findIndex(
-        (item) => canonicalUrl(item.quoteUrl) === canonicalUrl(normalized.quoteUrl),
-      )
-      if (index >= 0) records.value[index] = { ...records.value[index], ...normalized }
-      else records.value.push(normalized)
-      ensureMultiplier(getFiscalQuarter(normalized.signedMonth).key)
-    })
-    if (parsed.quarterMultipliers && typeof parsed.quarterMultipliers === 'object') {
-      quarterMultipliers.value = {
-        ...quarterMultipliers.value,
-        ...normalizeMultipliers(parsed.quarterMultipliers),
-      }
-    }
-    persistToDb(() => db.upsertRecords(records.value))
-    persistToDb(() => db.upsertMultipliers(quarterMultipliers.value))
-    showStatus('JSON 已匯入。', 'ok')
-  } catch (error) {
-    showStatus((error as Error).message || '匯入 JSON 失敗。', 'error')
-  }
 }
 
 function exportCsv() {
@@ -523,17 +472,8 @@ npm start
       <div class="section-head">
         <h2>總覽</h2>
         <div class="tool-row">
-          <button class="secondary" type="button" @click="exportJson">匯出 JSON</button>
-          <button class="secondary" type="button" @click="importFile?.click()">匯入 JSON</button>
           <button class="secondary" type="button" @click="exportCsv">匯出 CSV</button>
           <button class="danger" type="button" @click="clearRecords">清空紀錄</button>
-          <input
-            ref="importFile"
-            class="hidden"
-            type="file"
-            accept="application/json,.json"
-            @change="importJson"
-          />
         </div>
       </div>
       <div class="totals">

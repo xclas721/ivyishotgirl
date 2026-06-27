@@ -105,14 +105,6 @@ export async function upsertRecord(record: BonusRecord): Promise<void> {
   if (error) throw error
 }
 
-export async function upsertRecords(records: BonusRecord[]): Promise<void> {
-  if (!records.length) return
-  const { error } = await supabase
-    .from('bonus_records')
-    .upsert(records.map(recordToRow), { onConflict: 'id' })
-  if (error) throw error
-}
-
 export async function deleteRecord(id: string): Promise<void> {
   const { error } = await supabase.from('bonus_records').delete().eq('id', id)
   if (error) throw error

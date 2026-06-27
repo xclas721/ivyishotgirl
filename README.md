@@ -43,14 +43,12 @@ npm run start:pw
 - 收款月份決定實際發放季度。
 - 財務季度：2-4 月 Q1、5-7 月 Q2、8-10 月 Q3、11-12 月與隔年 1 月 Q4；1 月歸前一年度 Q4。
 - 季度倍率存在 `quarterMultipliers`，每筆案件只保存案件資料。
-- `localStorage` 保存 `quotes` 與 `quarterMultipliers`。
+- 資料保存在 Supabase（`bonus_records`、`quarter_multipliers` 兩張表）。
 
 ## 資料操作
 
 前端保留：
 
-- 匯出 JSON
-- 匯入 JSON
 - 匯出 CSV
 - 清空紀錄
 
