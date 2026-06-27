@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { nextTick, onMounted, reactive, ref } from 'vue'
 import { getFiscalQuarter, multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
 import type { Quarter } from '@/shared/fiscalQuarter'
 import type { CustomerType } from '@/lib/db'
@@ -18,6 +18,7 @@ import {
   ensureLoaded,
   upsertRecord,
   removeRecord,
+  applyFilterForSignedMonth,
   multiplierFor,
   formatNumber,
   formatMultiplier,
@@ -44,6 +45,7 @@ const isFetching = ref(false)
 const isSyncingAll = ref(false)
 const apiOk = ref(false)
 const syncingIds = ref<Set<string>>(new Set())
+const highlightedRecordId = ref('')
 
 const summary = ledgerSummary
 
@@ -119,10 +121,11 @@ async function fetchQuote() {
 
   try {
     const quote = await requestQuote(inputUrl)
+    const recordId = canonicalUrl(quote.quoteUrl || inputUrl)
     const finalSignedMonth = signedMonth.value || quote.signedMonth || ''
     upsertRecord(
       applyQuoteToRecord(quote, {
-        id: canonicalUrl(quote.quoteUrl || inputUrl),
+        id: recordId,
         quoteUrl: quote.quoteUrl || inputUrl,
         signedMonth: finalSignedMonth,
         paidMonth: paidMonth.value,
@@ -132,11 +135,26 @@ async function fetchQuote() {
     quoteUrl.value = ''
     signedMonth.value = ''
     showStatus(...quoteResultMessage(quote, finalSignedMonth, '已新增'))
+    await revealRecord(recordId, finalSignedMonth)
   } catch (error) {
     showStatus(`抓取失敗：${friendlyFetchError(error)}`, 'error')
   } finally {
     isFetching.value = false
   }
+}
+
+async function revealRecord(recordId: string, signedMonth: string) {
+  applyFilterForSignedMonth(signedMonth)
+  activeTab.value = 'records'
+  highlightedRecordId.value = recordId
+  await nextTick()
+  document.getElementById(`record-row-${recordId}`)?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'nearest',
+  })
+  window.setTimeout(() => {
+    if (highlightedRecordId.value === recordId) highlightedRecordId.value = ''
+  }, 4000)
 }
 
 // Re-fetch quote data for one record, keeping user-set 回簽/收款月份.
@@ -592,6 +610,7 @@ npm start
       <RecordsTable
         v-else
         :records="visibleRecords"
+        :highlight-id="highlightedRecordId"
         :is-file-mode="isFileMode"
         :is-loading="isLoading"
         :is-syncing-all="isSyncingAll"

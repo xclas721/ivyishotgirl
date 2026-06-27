@@ -187,6 +187,18 @@ export const filterContextLabel = computed(() => {
   return `${yearPart} · ${quarterPart}`
 })
 
+// Align the global quarter filter so a record's signed month is visible.
+export function applyFilterForSignedMonth(signedMonth: string) {
+  const q = getFiscalQuarter(signedMonth)
+  if (q.year && q.quarter) {
+    selectedYear.value = q.year
+    selectedQuarter.value = q.quarter
+    return
+  }
+  selectedYear.value = 'all'
+  selectedQuarter.value = 'all'
+}
+
 // Years offered in the filter — data years plus the current default, so the
 // 預設本季度 year always appears even before any data exists for it.
 export const filterYears = computed(() => {

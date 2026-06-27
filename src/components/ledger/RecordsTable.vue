@@ -15,6 +15,7 @@ import { finalCommissionFor } from '@/composables/ledgerSummary'
 
 const props = defineProps<{
   records: BonusRecord[]
+  highlightId?: string
   isFileMode: boolean
   isLoading: boolean
   isSyncingAll: boolean
@@ -82,7 +83,12 @@ function isSyncing(id: string) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="record in sortedRecords" :key="record.id">
+        <tr
+          v-for="record in sortedRecords"
+          :id="`record-row-${record.id}`"
+          :key="record.id"
+          :class="{ 'is-highlighted': record.id === highlightId }"
+        >
           <td class="order-cell sticky-col sticky-col-1">
             <a
               v-if="record.quoteUrl"
