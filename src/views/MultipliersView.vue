@@ -7,8 +7,11 @@ import {
   dbError,
   isLoading,
   multiplierYears,
+  filterYears,
   displayedYears,
+  displayedQuarters,
   selectedYear,
+  selectedQuarter,
   ensureLoaded,
   multiplierFor,
   updateMultiplier,
@@ -63,11 +66,20 @@ function commitAddYear() {
       <div class="section-head">
         <h2>各季度倍率</h2>
         <div class="tool-row">
-          <label v-if="multiplierYears.length" class="year-filter">
+          <label v-if="filterYears.length" class="year-filter">
             年度
             <select v-model="selectedYear">
               <option value="all">全部</option>
-              <option v-for="year in multiplierYears" :key="year" :value="year">{{ year }}</option>
+              <option v-for="year in filterYears" :key="year" :value="year">{{ year }}</option>
+            </select>
+          </label>
+          <label class="year-filter">
+            季度
+            <select v-model="selectedQuarter">
+              <option value="all">全部</option>
+              <option v-for="q in ['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]" :key="q" :value="q">
+                {{ q }}
+              </option>
             </select>
           </label>
           <input
@@ -81,13 +93,13 @@ function commitAddYear() {
         </div>
       </div>
       <p v-if="status.message" class="status" :class="status.tone">{{ status.message }}</p>
-      <div v-if="multiplierYears.length === 0" class="empty">
+      <div v-if="displayedYears.length === 0" class="empty">
         尚無年份設定。新增報價單後會依回簽季度自動出現，也可輸入年份按「新增年份」。
       </div>
       <div v-for="year in displayedYears" v-else :key="year" class="year-block">
         <h3>{{ year }}</h3>
         <div
-          v-for="quarter in ['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]"
+          v-for="quarter in displayedQuarters"
           :key="`${year}-${quarter}`"
           class="quarter-setting"
           :class="{ 'no-multiplier': !multipliersApply(`${year}-${quarter}`) }"

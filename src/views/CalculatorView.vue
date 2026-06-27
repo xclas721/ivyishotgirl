@@ -2,13 +2,14 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ExternalLink } from 'lucide-vue-next'
 import { getFiscalQuarter, multipliersApply } from '@/shared/fiscalQuarter'
-import type { QuarterInfo } from '@/shared/fiscalQuarter'
+import type { QuarterInfo, Quarter } from '@/shared/fiscalQuarter'
 import type { BonusRecord, CustomerType } from '@/lib/db'
 import {
   records,
   visibleRecords,
   selectedYear,
-  multiplierYears,
+  selectedQuarter,
+  filterYears,
   quarterMultipliers,
   isLoading,
   dbError,
@@ -17,7 +18,6 @@ import {
   upsertRecord,
   updateRecord,
   removeRecord,
-  clearAll,
   multiplierFor,
   isDefaultMultiplier,
   formatNumber,
@@ -64,6 +64,7 @@ const signedMonth = ref('')
 const paidMonth = ref(currentMonth())
 const status = reactive({ message: '', tone: '' })
 const isFetching = ref(false)
+const isSyncingAll = ref(false)
 const apiOk = ref(false)
 const syncingIds = ref<Set<string>>(new Set())
 
@@ -146,36 +147,75 @@ async function fetchQuote() {
   }
 }
 
-// Re-fetch an existing record from its stored URL, refreshing the quote data
-// while keeping the user-set 回簽/收款月份.
+// Re-fetch quote data for one record, keeping user-set 回簽/收款月份.
+async function syncRecordFromQuote(record: BonusRecord) {
+  const inputUrl = record.quoteUrl?.trim()
+  if (!inputUrl) throw new Error('此紀錄沒有可同步的網址。')
+  const quote = await requestQuote(inputUrl)
+  const finalSignedMonth = record.signedMonth || quote.signedMonth || ''
+  upsertRecord(
+    applyQuoteToRecord(quote, {
+      id: record.id,
+      quoteUrl: record.quoteUrl,
+      signedMonth: finalSignedMonth,
+      paidMonth: record.paidMonth,
+    }),
+  )
+  return { quote, finalSignedMonth }
+}
+
 async function resyncRecord(record: BonusRecord) {
   if (isFileMode) {
     showStatus('請先用 http://localhost:3000 開啟後再同步。', '')
     return
   }
-  const inputUrl = record.quoteUrl?.trim()
-  if (!inputUrl) return showStatus('此紀錄沒有可同步的網址。', 'error')
 
   setSyncing(record.id, true)
-  showStatus(`正在同步 ${record.orderNo || inputUrl}...`)
+  showStatus(`正在同步 ${record.orderNo || record.quoteUrl}...`)
 
   try {
-    const quote = await requestQuote(inputUrl)
-    const finalSignedMonth = record.signedMonth || quote.signedMonth || ''
-    upsertRecord(
-      applyQuoteToRecord(quote, {
-        id: record.id,
-        quoteUrl: record.quoteUrl,
-        signedMonth: finalSignedMonth,
-        paidMonth: record.paidMonth,
-      }),
-    )
+    const { quote, finalSignedMonth } = await syncRecordFromQuote(record)
     showStatus(...quoteResultMessage(quote, finalSignedMonth, '已重新同步'))
   } catch (error) {
     showStatus(`同步失敗：${friendlyFetchError(error)}`, 'error')
   } finally {
     setSyncing(record.id, false)
   }
+}
+
+async function resyncAllVisible() {
+  if (isFileMode) {
+    showStatus('請先用 http://localhost:3000 開啟後再同步。', '')
+    return
+  }
+
+  const targets = visibleRecords.value.filter((record) => record.quoteUrl?.trim())
+  if (targets.length === 0) return showStatus('目前沒有可同步的紀錄。', 'error')
+  if (isSyncingAll.value) return
+
+  isSyncingAll.value = true
+  let ok = 0
+  let fail = 0
+
+  for (let i = 0; i < targets.length; i++) {
+    const record = targets[i]
+    showStatus(`正在同步 ${i + 1}/${targets.length}：${record.orderNo || record.quoteUrl}...`)
+    setSyncing(record.id, true)
+    try {
+      await syncRecordFromQuote(record)
+      ok += 1
+    } catch (error) {
+      fail += 1
+      console.error('[sync-all]', record.id, error)
+    } finally {
+      setSyncing(record.id, false)
+    }
+  }
+
+  isSyncingAll.value = false
+  if (fail === 0) showStatus(`已同步 ${ok} 筆報價單。`, 'ok')
+  else if (ok === 0) showStatus(`${fail} 筆同步失敗。`, 'error')
+  else showStatus(`同步完成：${ok} 筆成功、${fail} 筆失敗。`, 'error')
 }
 
 async function requestQuote(inputUrl: string): Promise<QuoteResponse> {
@@ -245,12 +285,6 @@ function deleteRecord(id: string) {
   removeRecord(id)
 }
 
-function clearRecords() {
-  if (!confirm('確定清空全部紀錄與季度倍率設定？')) return
-  clearAll()
-  showStatus('已清空紀錄。', 'ok')
-}
-
 function exportCsv() {
   const headers = [
     '報價單網址',
@@ -269,7 +303,7 @@ function exportCsv() {
     '簽約依據',
     '金額來源',
   ]
-  const rows = records.value.map((record) => {
+  const rows = visibleRecords.value.map((record) => {
     const signedQuarter = getFiscalQuarter(record.signedMonth)
     const paidQuarter = getFiscalQuarter(record.paidMonth)
     const multiplierText = multipliersApply(signedQuarter.key)
@@ -461,11 +495,20 @@ function downloadFile(filename: string, content: string, type: string) {
         </p>
       </div>
       <div class="head-controls">
-        <label v-if="multiplierYears.length" class="year-filter">
+        <label v-if="filterYears.length" class="year-filter">
           年度
           <select v-model="selectedYear">
             <option value="all">全部</option>
-            <option v-for="year in multiplierYears" :key="year" :value="year">{{ year }}</option>
+            <option v-for="year in filterYears" :key="year" :value="year">{{ year }}</option>
+          </select>
+        </label>
+        <label class="year-filter">
+          季度
+          <select v-model="selectedQuarter">
+            <option value="all">全部</option>
+            <option v-for="q in ['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]" :key="q" :value="q">
+              {{ q }}
+            </option>
           </select>
         </label>
         <span v-if="apiOk" class="badge ok">API 已連線</span>
@@ -511,7 +554,6 @@ npm start
         <h2>總覽</h2>
         <div class="tool-row">
           <button class="secondary" type="button" @click="exportCsv">匯出 CSV</button>
-          <button class="danger" type="button" @click="clearRecords">清空紀錄</button>
         </div>
       </div>
       <div class="totals">
@@ -599,12 +641,25 @@ npm start
     </section>
 
     <section class="panel">
-      <h2>報價單紀錄</h2>
+      <div class="section-head">
+        <h2>報價單紀錄</h2>
+        <div v-if="visibleRecords.length > 0" class="tool-row">
+          <button
+            class="secondary"
+            type="button"
+            title="從報價單網址重新抓取最新資料（僅目前篩選範圍內的紀錄）"
+            :disabled="isFileMode || isLoading || isSyncingAll"
+            @click="resyncAllVisible"
+          >
+            {{ isSyncingAll ? '抓取中…' : `全部再同步（${visibleRecords.length}）` }}
+          </button>
+        </div>
+      </div>
       <div v-if="visibleRecords.length === 0" class="empty">
         {{
           records.length === 0
             ? '尚無報價單紀錄。輸入網址、回簽月份與收款月份後，按「抓取報價單」新增。'
-            : '此年度尚無報價單紀錄。可切換上方年度，或選「全部」。'
+            : '此篩選條件下尚無報價單紀錄。可切換上方年度或季度，或選「全部」。'
         }}
       </div>
       <div v-else class="table-wrap">
@@ -756,7 +811,7 @@ npm start
                 <button
                   class="secondary"
                   type="button"
-                  :disabled="isFileMode || isSyncing(record.id)"
+                  :disabled="isFileMode || isSyncing(record.id) || isSyncingAll"
                   @click="resyncRecord(record)"
                 >
                   {{ isSyncing(record.id) ? '同步中…' : '再同步' }}

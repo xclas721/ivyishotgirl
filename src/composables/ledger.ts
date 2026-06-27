@@ -11,10 +11,12 @@ export const quarterMultipliers = ref<Record<string, QuarterMultiplier>>({})
 export const isLoading = ref(true)
 export const dbError = ref('')
 
-// Year filter, shared across pages. 'all' shows everything; otherwise only the
-// data whose 回簽 (signed) fiscal year matches. Defaults to the latest year once
-// data loads.
-export const selectedYear = ref<number | 'all'>('all')
+// Year/quarter filter, shared across pages. 'all' shows everything; otherwise
+// only the data whose 回簽 (signed) fiscal year/quarter matches. Defaults to the
+// current fiscal quarter so the view opens on 本季度.
+const currentFiscal = getFiscalQuarter(new Date().toISOString().slice(0, 7))
+export const selectedYear = ref<number | 'all'>(currentFiscal.year || 'all')
+export const selectedQuarter = ref<Quarter | 'all'>(currentFiscal.quarter || 'all')
 
 export const isFileMode = typeof window !== 'undefined' && window.location.protocol === 'file:'
 
@@ -33,9 +35,6 @@ export function ensureLoaded() {
       const [recs, mults] = await Promise.all([db.fetchRecords(), db.fetchMultipliers()])
       records.value = recs
       quarterMultipliers.value = mults
-      // Default to the most recent year so the view isn't flooded with history.
-      const latestYear = multiplierYears.value[0]
-      if (latestYear) selectedYear.value = latestYear
     } catch (err) {
       loadPromise = null
       console.error('[db] load failed', err)
@@ -143,18 +142,38 @@ export const multiplierYears = computed(() => {
   return Array.from(years).sort((a, b) => b - a)
 })
 
-// Records limited to the selected 回簽 year (or all of them).
+// Records limited to the selected 回簽 year and quarter (or all of them).
 export const visibleRecords = computed(() =>
-  selectedYear.value === 'all'
-    ? records.value
-    : records.value.filter((r) => getFiscalQuarter(r.signedMonth).year === selectedYear.value),
+  records.value.filter((r) => {
+    const q = getFiscalQuarter(r.signedMonth)
+    if (selectedYear.value !== 'all' && q.year !== selectedYear.value) return false
+    if (selectedQuarter.value !== 'all' && q.quarter !== selectedQuarter.value) return false
+    return true
+  }),
 )
 
-// Year blocks to render on the multipliers page given the filter.
-export const displayedYears = computed(() =>
-  selectedYear.value === 'all'
-    ? multiplierYears.value
-    : multiplierYears.value.filter((y) => y === selectedYear.value),
+// Years offered in the filter — data years plus the current default, so the
+// 預設本季度 year always appears even before any data exists for it.
+export const filterYears = computed(() => {
+  const years = new Set(multiplierYears.value)
+  if (typeof selectedYear.value === 'number') years.add(selectedYear.value)
+  return Array.from(years).sort((a, b) => b - a)
+})
+
+// Year blocks to render on the multipliers page given the year filter.
+export const displayedYears = computed(() => {
+  if (selectedYear.value === 'all') return multiplierYears.value
+  if (multiplierYears.value.includes(selectedYear.value)) {
+    return multiplierYears.value.filter((y) => y === selectedYear.value)
+  }
+  // Keep the selected year visible even before any records exist for it.
+  return [selectedYear.value]
+})
+
+// Quarters to render on the multipliers page given the quarter filter.
+const ALL_QUARTERS: Quarter[] = ['Q1', 'Q2', 'Q3', 'Q4']
+export const displayedQuarters = computed(() =>
+  selectedQuarter.value === 'all' ? ALL_QUARTERS : [selectedQuarter.value],
 )
 
 // ---------- multipliers ----------
