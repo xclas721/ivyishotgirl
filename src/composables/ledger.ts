@@ -286,6 +286,7 @@ export function normalizeRecord(record: Partial<BonusRecord>): BonusRecord | nul
     orderNo: String(record.orderNo || ''),
     customerName: String(record.customerName || ''),
     customerType: normalizeCustomerType(String(record.customerType)),
+    salesRep: String(record.salesRep || ''),
     taxExcludedAmount: toNumber(record.taxExcludedAmount),
     taxIncludedAmount: toNumber(record.taxIncludedAmount),
     signedMonth: String(record.signedMonth || '').slice(0, 7),

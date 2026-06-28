@@ -73,6 +73,7 @@ interface QuoteResponse {
   signedAtText?: string
   signedMonth?: string
   signedQuarterKey?: string
+  salesRep?: string
 }
 
 onMounted(async () => {
@@ -245,6 +246,7 @@ async function syncRecordFromQuote(record: BonusRecord) {
         signedMonth: finalSignedMonth,
         paidMonth: record.paidMonth,
         customerType: record.customerType,
+        salesRep: record.salesRep,
       },
       { preserveCustomerFields: true },
     ),
@@ -328,6 +330,7 @@ function applyQuoteToRecord(
     signedMonth: string
     paidMonth: string
     customerType?: CustomerType
+    salesRep?: string
   },
   options?: { preserveCustomerFields?: boolean },
 ): BonusRecord {
@@ -335,6 +338,7 @@ function applyQuoteToRecord(
   const customerType = preserveCustomer
     ? base.customerType || 'unknown'
     : base.customerType || defaultCustomerType()
+  const salesRep = quote.salesRep || (preserveCustomer ? base.salesRep || '' : '')
 
   return {
     id: base.id,
@@ -342,6 +346,7 @@ function applyQuoteToRecord(
     orderNo: quote.orderNo || '',
     customerName: quote.customerName || '',
     customerType,
+    salesRep,
     taxExcludedAmount: Number(quote.taxExcludedAmount || 0),
     taxIncludedAmount: Number(quote.taxIncludedAmount || 0),
     signedMonth: base.signedMonth,
@@ -389,6 +394,7 @@ function exportCsv() {
     '案件編號',
     '客戶名稱',
     '客戶類型',
+    '業務',
     '回簽月份',
     '收款月份',
     '回簽季度',
@@ -414,6 +420,7 @@ function exportCsv() {
       record.orderNo,
       record.customerName,
       customerTypeLabel(record.customerType),
+      record.salesRep,
       record.signedMonth,
       record.paidMonth,
       signedQuarter.key,
@@ -568,7 +575,7 @@ npm start
           </button>
         </div>
       </div>
-      <p class="hint">回簽月份會從報價單自動帶入，每列再選客戶類型和收款月份就好。</p>
+      <p class="hint">回簽月份與案件業務會從報價單自動帶入；每列再選客戶類型與收款月份。</p>
       <p class="status" :class="status.tone">{{ status.message }}</p>
     </section>
 

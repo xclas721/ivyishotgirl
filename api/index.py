@@ -158,6 +158,7 @@ def parse_quote_html(html: str, quote_url: str) -> dict:
 
     order_no = extract_order_no(text, quote_url)
     customer_name = extract_customer_name(text)
+    sales_rep = extract_sales_rep(text)
     customer_type = infer_customer_type(f"{customer_name}\n{text}")
     default_commission_rate = 5 if customer_type == "personal" else 4
 
@@ -204,6 +205,7 @@ def parse_quote_html(html: str, quote_url: str) -> dict:
         "quoteUrl": quote_url,
         "orderNo": order_no,
         "customerName": customer_name,
+        "salesRep": sales_rep,
         "customerType": customer_type,
         "taxExcludedAmount": tax_excluded,
         "taxIncludedAmount": tax_included,
@@ -249,6 +251,31 @@ def extract_order_no(text: str, quote_url: str) -> str:
                         return candidate
 
     return from_url
+
+
+def extract_sales_rep(text: str) -> str:
+    for pat in (
+        r"案件業務\s*[：:]\s*\n?\s*([^\n\r]+)",
+    ):
+        m = re.search(pat, text)
+        if m:
+            return clean_labeled_value(m.group(1))
+
+    lines = [ln.strip() for ln in text.split("\n")]
+    for i, line in enumerate(lines):
+        m_inline = re.match(r"^案件業務\s*[：:]\s*(.+)$", line)
+        if m_inline and m_inline.group(1).strip():
+            return clean_labeled_value(m_inline.group(1))
+        if re.match(r"^案件業務\s*[：:]?\s*$", line):
+            for j in range(i + 1, min(i + 4, len(lines))):
+                candidate = lines[j].strip()
+                if candidate and not re.match(r"^(聯絡|報價|案件|電話|/)$", candidate):
+                    return clean_labeled_value(candidate)
+    return ""
+
+
+def clean_labeled_value(value: str) -> str:
+    return re.sub(r"\s{2,}.*", "", str(value or "")).strip()
 
 
 def extract_customer_name(text: str) -> str:

@@ -62,7 +62,7 @@ function isSyncing(id: string) {
     <table>
       <thead>
         <tr class="colgroup-row">
-          <th colspan="3" class="colgroup-head">案件</th>
+          <th colspan="4" class="colgroup-head">案件</th>
           <th colspan="2" class="colgroup-head">月份</th>
           <th colspan="2" class="colgroup-head">季度</th>
           <th colspan="2" class="colgroup-head">金額</th>
@@ -73,6 +73,7 @@ function isSyncing(id: string) {
           <th class="sticky-col sticky-col-1">案件編號</th>
           <th class="sticky-col sticky-col-2">客戶名稱</th>
           <th class="sticky-col sticky-col-3">客戶類型</th>
+          <th>業務</th>
           <th>回簽月份</th>
           <th>收款月份</th>
           <th>回簽季度</th>
@@ -131,6 +132,15 @@ function isSyncing(id: string) {
             <div v-if="recordWarnings(record)" class="status error">
               {{ recordWarnings(record) }}
             </div>
+          </td>
+          <td class="rep-cell">
+            <input
+              class="rep-input"
+              :value="record.salesRep"
+              type="text"
+              placeholder="—"
+              @change="updateRecord(record, 'salesRep', ($event.target as HTMLInputElement).value)"
+            />
           </td>
           <td>
             <input

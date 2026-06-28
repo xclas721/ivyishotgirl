@@ -6,6 +6,7 @@ create table if not exists bonus_records (
   order_no             text        not null default '',
   customer_name        text        not null default '',
   customer_type        text        not null default 'unknown',
+  sales_rep            text        not null default '',
   tax_excluded_amount  integer     not null default 0,
   tax_included_amount  integer     not null default 0,
   signed_month         text        not null default '',
@@ -31,3 +32,6 @@ alter table quarter_multipliers disable row level security;
 
 -- 升級既有資料庫：移除已廢棄欄位
 alter table bonus_records drop column if exists base_commission_rate;
+
+-- 升級既有資料庫：新增「業務」欄位
+alter table bonus_records add column if not exists sales_rep text not null default '';

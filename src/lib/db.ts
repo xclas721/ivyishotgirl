@@ -16,6 +16,7 @@ export interface BonusRecord {
   orderNo: string
   customerName: string
   customerType: CustomerType
+  salesRep: string
   taxExcludedAmount: number
   taxIncludedAmount: number
   signedMonth: string
@@ -35,6 +36,7 @@ function recordToRow(r: BonusRecord) {
     order_no: r.orderNo,
     customer_name: r.customerName,
     customer_type: r.customerType,
+    sales_rep: r.salesRep,
     tax_excluded_amount: Math.round(r.taxExcludedAmount),
     tax_included_amount: Math.round(r.taxIncludedAmount),
     signed_month: r.signedMonth,
@@ -54,6 +56,7 @@ function rowToRecord(row: Record<string, unknown>): BonusRecord {
     orderNo: String(row.order_no ?? ''),
     customerName: String(row.customer_name ?? ''),
     customerType: ct,
+    salesRep: String(row.sales_rep ?? ''),
     taxExcludedAmount: Number(row.tax_excluded_amount ?? 0),
     taxIncludedAmount: Number(row.tax_included_amount ?? 0),
     signedMonth: String(row.signed_month ?? ''),
