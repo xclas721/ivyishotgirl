@@ -2,10 +2,13 @@
 import { RouterLink, RouterView } from 'vue-router'
 import { LayoutDashboard, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
 import QuarterContextBar from '@/components/layout/QuarterContextBar.vue'
+import PasswordGate from '@/components/PasswordGate.vue'
+import { isUnlocked } from '@/composables/gate'
 </script>
 
 <template>
-  <div class="site-layout">
+  <PasswordGate v-if="!isUnlocked" />
+  <div v-else class="site-layout">
     <nav class="sidebar">
       <div class="sidebar-header">
         <span class="sidebar-brand">Ivy的獎金</span>

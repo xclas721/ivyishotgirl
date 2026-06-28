@@ -26,9 +26,19 @@ create table if not exists quarter_multipliers (
   updated_at timestamptz  not null default now()
 );
 
+-- Key/value app settings. Holds the front-end gate password as a SHA-256 hash
+-- under key 'gate_password_sha256'. Seed the hash via the SQL Editor (kept out
+-- of this repo); see docs for the insert statement.
+create table if not exists app_settings (
+  key        text        primary key,
+  value      text        not null,
+  updated_at timestamptz not null default now()
+);
+
 -- Personal use: disable RLS so anon key can read/write freely
 alter table bonus_records       disable row level security;
 alter table quarter_multipliers disable row level security;
+alter table app_settings        disable row level security;
 
 -- 升級既有資料庫：移除已廢棄欄位
 alter table bonus_records drop column if exists base_commission_rate;
