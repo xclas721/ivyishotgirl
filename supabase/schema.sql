@@ -26,19 +26,18 @@ create table if not exists quarter_multipliers (
   updated_at timestamptz  not null default now()
 );
 
--- Key/value app settings. Holds the front-end gate password as a SHA-256 hash
--- under key 'gate_password_sha256'. Seed the hash via the SQL Editor (kept out
--- of this repo); see docs for the insert statement.
-create table if not exists app_settings (
-  key        text        primary key,
-  value      text        not null,
-  updated_at timestamptz not null default now()
-);
+-- Auth gate: only an authenticated session (the shared account) can read/write.
+-- The anon key alone is blocked at the database layer.
+alter table bonus_records       enable row level security;
+alter table quarter_multipliers enable row level security;
 
--- Personal use: disable RLS so anon key can read/write freely
-alter table bonus_records       disable row level security;
-alter table quarter_multipliers disable row level security;
-alter table app_settings        disable row level security;
+drop policy if exists "authenticated full access" on bonus_records;
+create policy "authenticated full access" on bonus_records
+  for all to authenticated using (true) with check (true);
+
+drop policy if exists "authenticated full access" on quarter_multipliers;
+create policy "authenticated full access" on quarter_multipliers
+  for all to authenticated using (true) with check (true);
 
 -- 升級既有資料庫：移除已廢棄欄位
 alter table bonus_records drop column if exists base_commission_rate;

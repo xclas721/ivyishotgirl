@@ -1,42 +1,42 @@
-// Simple front-end password gate. NOT real security — data is still reachable
-// via the anon key while RLS is off. This only keeps casual visitors out.
-// The password's SHA-256 hash lives in Supabase (`app_settings`), so it can be
-// changed without a redeploy and never ships in the public repo.
+// Single shared-account gate using Supabase Auth + RLS.
+// This is real protection: once RLS is enabled, the anon key alone can't read
+// or write — only an authenticated session can. The email is a fixed identifier
+// (not secret); only the password matters. The login UI asks for the password
+// only and supplies this email behind the scenes.
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 
-const STORAGE_KEY = 'ivy-gate-unlocked'
-const GATE_SETTING_KEY = 'gate_password_sha256'
+// Must match the Supabase Auth user created in the dashboard.
+export const GATE_EMAIL = 'gate@ivy.app'
 
-export const isUnlocked = ref(
-  typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) === '1',
-)
+export const isUnlocked = ref(false)
+export const authReady = ref(false)
 
-async function sha256Hex(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+// Restore any persisted session, then keep the flag in sync with auth changes.
+void supabase.auth.getSession().then(({ data }) => {
+  isUnlocked.value = !!data.session
+  authReady.value = true
+})
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  isUnlocked.value = !!session
+})
+
+// Returns true on success, false on wrong password. Throws on other errors.
+export async function tryUnlock(password: string): Promise<boolean> {
+  const { error } = await supabase.auth.signInWithPassword({
+    email: GATE_EMAIL,
+    password,
+  })
+  if (!error) {
+    isUnlocked.value = true
+    return true
+  }
+  if (/invalid login credentials/i.test(error.message)) return false
+  throw new Error('登入失敗，請稍後再試。')
 }
 
-// Returns true on success. Throws if the gate setting can't be read.
-export async function tryUnlock(input: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('app_settings')
-    .select('value')
-    .eq('key', GATE_SETTING_KEY)
-    .maybeSingle()
-
-  if (error) throw new Error('無法讀取密碼設定，請稍後再試。')
-  if (!data?.value) throw new Error('尚未設定密碼，請聯絡管理員。')
-
-  const inputHash = await sha256Hex(input)
-  if (inputHash !== data.value) return false
-
-  isUnlocked.value = true
-  localStorage.setItem(STORAGE_KEY, '1')
-  return true
-}
-
-export function lock() {
+export async function lock() {
+  await supabase.auth.signOut()
   isUnlocked.value = false
-  localStorage.removeItem(STORAGE_KEY)
 }

@@ -3,11 +3,12 @@ import { RouterLink, RouterView } from 'vue-router'
 import { LayoutDashboard, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
 import QuarterContextBar from '@/components/layout/QuarterContextBar.vue'
 import PasswordGate from '@/components/PasswordGate.vue'
-import { isUnlocked } from '@/composables/gate'
+import { isUnlocked, authReady } from '@/composables/gate'
 </script>
 
 <template>
-  <PasswordGate v-if="!isUnlocked" />
+  <template v-if="!authReady" />
+  <PasswordGate v-else-if="!isUnlocked" />
   <div v-else class="site-layout">
     <nav class="sidebar">
       <div class="sidebar-header">
