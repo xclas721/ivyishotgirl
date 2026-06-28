@@ -48,7 +48,7 @@ function commitAddYear() {
       <div>
         <h1>季度倍率設定</h1>
         <p>
-          同一回簽季度的案件共用同一組倍率。倍率存在資料庫的 quarter_multipliers，不存在每筆案件裡。
+          同一個回簽季度的案子共用一組倍率，整季一份，不是每筆案子各自存。
         </p>
       </div>
     </header>
@@ -69,7 +69,7 @@ function commitAddYear() {
       </div>
       <p v-if="status.message" class="status" :class="status.tone">{{ status.message }}</p>
       <div v-if="displayedYears.length === 0" class="empty">
-        尚無年份設定。新增報價單後會依回簽季度自動出現，也可輸入年份按「新增年份」。
+        還沒有年份設定。新增報價單後會依回簽季度自動出現，也可以直接輸入年份按「新增年份」。
       </div>
       <div v-for="year in displayedYears" v-else :key="year" class="year-block">
         <h3>{{ year }}</h3>
@@ -84,7 +84,7 @@ function commitAddYear() {
             <span v-if="!multipliersApply(`${year}-${quarter}`)" class="no-mult-tag">無倍率</span>
           </strong>
           <p v-if="!multipliersApply(`${year}-${quarter}`)" class="hint">
-            此季度只計基礎獎金，不套用倍率（倍率自 {{ MULTIPLIER_START_KEY }} 起適用）。
+            這一季只算基礎獎金，不套倍率（倍率自 {{ MULTIPLIER_START_KEY }} 起適用）。
           </p>
           <div v-else class="multiplier-grid">
             <label v-for="field in multiplierFields" :key="field">

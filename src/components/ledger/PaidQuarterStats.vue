@@ -18,7 +18,7 @@ const summary = ledgerSummary
         <p class="quarter-section-tag">依收款月份</p>
         <h2>發放季度實領</h2>
         <p class="quarter-section-desc">
-          這一季<strong>實際入帳</strong>會領到多少。金額仍依各案的回簽季度計算，只是按收款時間歸類。
+          這一季<strong>實際入帳</strong>會領到多少。金額還是按各案的回簽季度算，只是改用收款時間歸類。
         </p>
       </div>
     </div>

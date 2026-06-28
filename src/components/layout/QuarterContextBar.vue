@@ -28,7 +28,7 @@ const paidCount = computed(() => paidVisibleRecords.value.length)
     <div class="quarter-context-main">
       <p class="quarter-context-label">工作季度</p>
       <p class="quarter-context-title">{{ filterContextLabel }}</p>
-      <p class="quarter-context-hint">篩選依回簽月份；實領 KPI 依收款月份</p>
+      <p class="quarter-context-hint">篩選看回簽月份，實領看收款月份</p>
     </div>
     <QuarterFilter />
     <div class="quarter-context-kpis">

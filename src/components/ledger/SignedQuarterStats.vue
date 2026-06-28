@@ -25,7 +25,7 @@ const summary = ledgerSummary
         <p class="quarter-section-tag">依回簽月份</p>
         <h2>回簽季度試算</h2>
         <p class="quarter-section-desc">
-          這一季<strong>簽了哪些案</strong>、業績與倍率加總後的<strong>應計獎金</strong>。獎金%與倍率都看回簽季度。
+          這一季<strong>簽了哪些案子</strong>，業績和倍率加總後的<strong>應計獎金</strong>。獎金%和倍率都看回簽季度。
         </p>
       </div>
     </div>

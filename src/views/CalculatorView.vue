@@ -127,7 +127,7 @@ async function fetchQuotes() {
     return showStatus('每筆網址都需為有效的報價單連結。', 'error')
   }
   if (entries.some((entry) => !entry.paidMonth)) {
-    return showStatus('每筆都需選擇收款月份。', 'error')
+    return showStatus('每一列都要選收款月份。', 'error')
   }
 
   isFetching.value = true
@@ -233,7 +233,7 @@ function ensureSectionVisible(id: LedgerTabId) {
 // Re-fetch quote data for one record, keeping user-set 回簽/收款月份.
 async function syncRecordFromQuote(record: BonusRecord) {
   const inputUrl = record.quoteUrl?.trim()
-  if (!inputUrl) throw new Error('此紀錄沒有可同步的網址。')
+  if (!inputUrl) throw new Error('這筆沒有可同步的網址。')
   const quote = await requestQuote(inputUrl)
   const finalSignedMonth = record.signedMonth || quote.signedMonth || ''
   upsertRecord(
@@ -380,7 +380,7 @@ function deleteRecord(id: string) {
 
 function exportCsv() {
   if (visibleRecords.value.length === 0) {
-    showStatus('此篩選條件下無資料可匯出。', 'error')
+    showStatus('這個篩選範圍沒有資料可以匯出。', 'error')
     return
   }
 
@@ -494,7 +494,7 @@ function downloadFile(filename: string, content: string, type: string) {
       <div>
         <h1>季度獎金帳本</h1>
         <p>
-          回簽月份決定獎金%與倍率，收款月份決定實際發放季度。金額以報價單「未連稅金額」與「總計」為準。
+          回簽月份決定獎金%和倍率，收款月份決定哪一季發放。金額看報價單的「未連稅金額」和「總計」。
         </p>
       </div>
       <span v-if="apiOk" class="badge ok">API 已連線</span>
@@ -505,7 +505,7 @@ function downloadFile(filename: string, content: string, type: string) {
     <section v-show="isSectionVisible('overview')" class="panel">
       <h2>新增報價單</h2>
       <div v-if="isFileMode" class="server-notice">
-        <strong>此工具需要透過本機伺服器啟動，請不要直接點 HTML 檔。</strong>
+        <strong>這個工具要從本機伺服器開，別直接點 HTML 檔。</strong>
         <pre>
 npm install
 npm start
@@ -543,7 +543,7 @@ npm start
             v-if="quoteDrafts.length > 1"
             class="add-url-remove"
             type="button"
-            title="移除此列"
+            title="移除這列"
             :disabled="isFetching"
             @click="removeQuoteDraftRow(index)"
           >
@@ -569,7 +569,7 @@ npm start
           </button>
         </div>
       </div>
-      <p class="hint">回簽月份由報價單自動帶入；每列請選擇客戶類型與收款月份。</p>
+      <p class="hint">回簽月份會從報價單自動帶入，每列再選客戶類型和收款月份就好。</p>
       <p class="status" :class="status.tone">{{ status.message }}</p>
     </section>
 
@@ -610,7 +610,7 @@ npm start
           <button
             class="secondary"
             type="button"
-            title="從報價單網址重新抓取最新資料（僅目前篩選範圍內的紀錄）"
+            title="用報價單網址重新抓最新資料（只限目前篩選範圍）"
             :disabled="isFileMode || isLoading || isSyncingAll"
             @click="resyncAllVisible"
           >
@@ -621,8 +621,8 @@ npm start
       <div v-if="visibleRecords.length === 0" class="empty">
         {{
           records.length === 0
-            ? '尚無報價單紀錄。貼上報價單網址後，按「抓取報價單」新增。'
-            : '此篩選條件下尚無報價單紀錄。可切換上方工作季度篩選，或選「全部」。'
+            ? '還沒有報價單紀錄。貼上網址，按「抓取報價單」就能新增。'
+            : '這個篩選範圍下沒有紀錄。換上面的工作季度，或選「全部」看看。'
         }}
       </div>
       <RecordsTable
@@ -638,10 +638,10 @@ npm start
       />
       <div class="notice">
         <ul class="notice-list">
-          <li>1 月會歸到前一年度 Q4。</li>
-          <li>若同一網址重複新增，會更新原本那筆資料。</li>
+          <li>1 月算前一年度的 Q4。</li>
+          <li>同一個網址重複新增，會更新原本那筆。</li>
           <li>
-            倍率與最終獎金自 {{ MULTIPLIER_START_KEY }} 起適用，此前季度無法計算。
+            倍率和最終獎金從 {{ MULTIPLIER_START_KEY }} 才開始算，更早的季度算不出來。
           </li>
         </ul>
       </div>
