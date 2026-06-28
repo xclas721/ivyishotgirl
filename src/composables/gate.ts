@@ -24,16 +24,45 @@ supabase.auth.onAuthStateChange((_event, session) => {
 
 // Returns true on success, false on wrong password. Throws on other errors.
 export async function tryUnlock(password: string): Promise<boolean> {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: GATE_EMAIL,
-    password,
+  const response = await fetch('/api/gate-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
   })
-  if (!error) {
-    isUnlocked.value = true
-    return true
+
+  let data: {
+    ok?: boolean
+    errorType?: string
+    message?: string
+    access_token?: string
+    refresh_token?: string
+  } = {}
+  try {
+    data = await response.json()
+  } catch {
+    throw new Error('登入失敗，請稍後再試。')
   }
-  if (/invalid login credentials/i.test(error.message)) return false
-  throw new Error('登入失敗，請稍後再試。')
+
+  if (response.status === 429) {
+    throw new Error(data.message || '登入嘗試過於頻繁，請稍後再試。')
+  }
+
+  if (response.status === 401 || data.errorType === 'INVALID_CREDENTIALS') {
+    return false
+  }
+
+  if (!response.ok || !data.access_token || !data.refresh_token) {
+    throw new Error(data.message || '登入失敗，請稍後再試。')
+  }
+
+  const { error } = await supabase.auth.setSession({
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+  })
+  if (error) throw new Error('登入失敗，請稍後再試。')
+
+  isUnlocked.value = true
+  return true
 }
 
 export async function lock() {

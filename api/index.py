@@ -1,18 +1,27 @@
 import math
+import os
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup, Tag
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from api.rate_limit import SlidingWindowRateLimiter
 
 app = FastAPI()
 
 ALLOWED_HOST = "quote.saiens.tw"
+GATE_EMAIL = "gate@ivy.app"
+GATE_LOGIN_LIMIT = 10
+GATE_LOGIN_WINDOW_SEC = 60
+
+_gate_login_limiter = SlidingWindowRateLimiter()
 BROWSER_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -29,6 +38,46 @@ class FetchQuoteRequest(BaseModel):
     url: str
 
 
+class GateLoginRequest(BaseModel):
+    password: str
+
+
+def _load_local_env() -> None:
+    """Load .env.local for local uvicorn (Vite already reads it for the frontend)."""
+    path = Path(__file__).resolve().parent.parent / ".env.local"
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+_load_local_env()
+
+
+def _env(*names: str) -> str:
+    for name in names:
+        value = os.environ.get(name, "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for", "").strip()
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
+
+
 def err(status: int, error_type: str, message: str, detail: str = "") -> JSONResponse:
     return JSONResponse(
         status_code=status,
@@ -42,6 +91,67 @@ def err(status: int, error_type: str, message: str, detail: str = "") -> JSONRes
 @app.get("/api/health")
 async def health():
     return {"ok": True, "message": "server is running"}
+
+
+@app.post("/api/gate-login")
+async def gate_login(body: GateLoginRequest, request: Request):
+    password = body.password
+    if not password:
+        return err(400, "INVALID_INPUT", "請輸入密碼")
+
+    ip = _client_ip(request)
+    allowed, retry_after = _gate_login_limiter.check(
+        f"gate-login:{ip}", GATE_LOGIN_LIMIT, GATE_LOGIN_WINDOW_SEC
+    )
+    if not allowed:
+        return err(
+            429,
+            "RATE_LIMITED",
+            f"登入嘗試過於頻繁，請 {retry_after} 秒後再試",
+            f"同一 IP 每 {GATE_LOGIN_WINDOW_SEC} 秒最多 {GATE_LOGIN_LIMIT} 次",
+        )
+
+    supabase_url = _env("SUPABASE_URL", "VITE_SUPABASE_URL")
+    anon_key = _env("SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY")
+    if not supabase_url or not anon_key:
+        return err(
+            503,
+            "CONFIG_ERROR",
+            "登入服務未設定，請聯絡管理員",
+            "缺少 SUPABASE_URL / SUPABASE_ANON_KEY",
+        )
+
+    token_url = f"{supabase_url.rstrip('/')}/auth/v1/token?grant_type=password"
+    headers = {
+        "apikey": anon_key,
+        "Authorization": f"Bearer {anon_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {"email": GATE_EMAIL, "password": password}
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.post(token_url, headers=headers, json=payload)
+    except httpx.HTTPError as exc:
+        print(f"[gate-login] upstream error: {exc}")
+        return err(502, "AUTH_UPSTREAM", "登入服務暫時無法連線，請稍後再試")
+
+    if response.status_code == 200:
+        data = response.json()
+        return JSONResponse(
+            {
+                "ok": True,
+                "access_token": data.get("access_token", ""),
+                "refresh_token": data.get("refresh_token", ""),
+                "expires_in": data.get("expires_in"),
+            }
+        )
+
+    if response.status_code in (400, 401, 422):
+        return err(401, "INVALID_CREDENTIALS", "密碼錯誤")
+
+    print(f"[gate-login] unexpected status {response.status_code}: {response.text[:200]}")
+    return err(502, "AUTH_UPSTREAM", "登入失敗，請稍後再試")
 
 
 @app.post("/api/fetch-quote")
