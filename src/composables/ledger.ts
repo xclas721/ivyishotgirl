@@ -224,6 +224,19 @@ export const displayedQuarters = computed(() =>
   selectedQuarter.value === 'all' ? ALL_QUARTERS : [selectedQuarter.value],
 )
 
+// True when a quarter key (e.g. "2026-Q2") matches the active year/quarter
+// filter — used to highlight the in-focus stat card.
+export function isFilteredQuarter(key: string): boolean {
+  if (!key || (selectedYear.value === 'all' && selectedQuarter.value === 'all')) return false
+  const match = /^(\d{4})-(Q[1-4])$/.exec(key)
+  if (!match) return false
+  const year = Number(match[1])
+  const quarter = match[2] as Quarter
+  const yearOk = selectedYear.value === 'all' || selectedYear.value === year
+  const quarterOk = selectedQuarter.value === 'all' || selectedQuarter.value === quarter
+  return yearOk && quarterOk
+}
+
 // ---------- multipliers ----------
 
 export function ensureMultiplier(key: string): boolean {

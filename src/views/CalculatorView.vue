@@ -2,7 +2,6 @@
 import { nextTick, onMounted, reactive, ref } from 'vue'
 import { Plus, X } from 'lucide-vue-next'
 import { getFiscalQuarter, multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
-import type { Quarter } from '@/shared/fiscalQuarter'
 import type { CustomerType } from '@/lib/db'
 import {
   CUSTOMER_TYPE_OPTIONS,
@@ -15,11 +14,11 @@ import DbStatusBanner from '@/components/layout/DbStatusBanner.vue'
 import LedgerTabs from '@/components/ledger/LedgerTabs.vue'
 import type { LedgerTabId } from '@/components/ledger/LedgerTabs.vue'
 import RecordsTable from '@/components/ledger/RecordsTable.vue'
+import SignedQuarterStats from '@/components/ledger/SignedQuarterStats.vue'
+import PaidQuarterStats from '@/components/ledger/PaidQuarterStats.vue'
 import {
   records,
   visibleRecords,
-  selectedYear,
-  selectedQuarter,
   isLoading,
   isFileMode,
   ensureLoaded,
@@ -27,10 +26,7 @@ import {
   removeRecord,
   applyFilterForSignedMonth,
   multiplierFor,
-  formatNumber,
-  formatMultiplier,
   multiplierSummary,
-  combinedMultiplier,
   canonicalUrl,
   currentMonth,
 } from '@/composables/ledger'
@@ -128,7 +124,7 @@ async function fetchQuotes() {
     .filter((row) => row.url)
   if (entries.length === 0) return showStatus('請先輸入報價單網址。', 'error')
   if (entries.some((entry) => !isValidQuoteUrl(entry.url))) {
-    return showStatus('每筆網址都需為 quote.saiens.tw 的有效連結。', 'error')
+    return showStatus('每筆網址都需為有效的報價單連結。', 'error')
   }
   if (entries.some((entry) => !entry.paidMonth)) {
     return showStatus('每筆都需選擇收款月份。', 'error')
@@ -432,7 +428,7 @@ function exportCsv() {
     ]
   })
   const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')
-  downloadFile('saiens-bonus-records.csv', `﻿${csv}`, 'text/csv;charset=utf-8')
+  downloadFile('ivy-bonus-records.csv', `﻿${csv}`, 'text/csv;charset=utf-8')
 }
 
 function amountDebugText(debug: Record<string, unknown> = {}) {
@@ -475,17 +471,6 @@ function networkDiagnostic(error: unknown) {
 
 function csvCell(value: unknown) {
   return `"${String(value ?? '').replace(/"/g, '""')}"`
-}
-
-function isFilteredQuarter(key: string) {
-  if (!key || (selectedYear.value === 'all' && selectedQuarter.value === 'all')) return false
-  const match = /^(\d{4})-(Q[1-4])$/.exec(key)
-  if (!match) return false
-  const year = Number(match[1])
-  const quarter = match[2] as Quarter
-  const yearOk = selectedYear.value === 'all' || selectedYear.value === year
-  const quarterOk = selectedQuarter.value === 'all' || selectedQuarter.value === quarter
-  return yearOk && quarterOk
 }
 
 function downloadFile(filename: string, content: string, type: string) {
@@ -534,7 +519,7 @@ npm start
             <input
               v-model="draft.url"
               type="url"
-              placeholder="貼上 quote.saiens.tw/my/orders/... 網址"
+              placeholder="貼上報價單網址（…/my/orders/...）"
               @keydown.enter.prevent="fetchQuotes"
             />
           </label>
@@ -662,104 +647,8 @@ npm start
       </div>
     </section>
 
-    <section v-show="isSectionVisible('signed')" class="panel">
-      <div class="quarter-section-head">
-        <div>
-          <p class="quarter-section-tag">依回簽月份</p>
-          <h2>回簽季度試算</h2>
-          <p class="quarter-section-desc">
-            這一季<strong>簽了哪些案</strong>、業績與倍率加總後的<strong>應計獎金</strong>。獎金%與倍率都看回簽季度。
-          </p>
-        </div>
-      </div>
-      <div v-if="summary.signed.length === 0" class="empty">尚無回簽季度資料</div>
-      <div v-else class="quarter-grid">
-        <article
-          v-for="item in summary.signed"
-          :key="item.key"
-          class="quarter-card quarter-card--signed"
-          :class="{ 'is-filtered': isFilteredQuarter(item.key) }"
-        >
-          <div class="quarter-card-top">
-            <span class="quarter-badge">{{ item.key }}</span>
-            <span class="quarter-meta">{{ item.range }} · {{ item.count }} 筆回簽</span>
-          </div>
-          <div class="quarter-hero">
-            <span class="quarter-hero-label">應計獎金</span>
-            <strong
-              class="quarter-hero-amount"
-              :class="{ 'is-muted': !multipliersApply(item.key) }"
-            >
-              {{ multipliersApply(item.key) ? money.format(item.final) : '無法計算' }}
-            </strong>
-            <p v-if="!multipliersApply(item.key)" class="quarter-hero-note">
-              倍率自 {{ MULTIPLIER_START_KEY }} 起適用
-            </p>
-          </div>
-          <div v-if="multipliersApply(item.key)" class="quarter-breakdown">
-            <div class="quarter-breakdown-row">
-              <span>簽約未連稅合計</span>
-              <b>{{ money.format(item.taxExcludedAmount) }}</b>
-            </div>
-            <div class="quarter-breakdown-row">
-              <span>基礎獎金小計</span>
-              <b>{{ money.format(item.base) }}</b>
-            </div>
-            <div class="quarter-breakdown-row">
-              <span>季度倍率</span>
-              <b
-                class="quarter-mult"
-                :title="formatMultiplier(multiplierFor(item.key))"
-              >
-                ×{{ formatNumber(combinedMultiplier(multiplierFor(item.key))) }}
-              </b>
-            </div>
-          </div>
-        </article>
-      </div>
-    </section>
+    <SignedQuarterStats v-show="isSectionVisible('signed')" />
 
-    <section v-show="isSectionVisible('paid')" class="panel">
-      <div class="quarter-section-head">
-        <div>
-          <p class="quarter-section-tag">依收款月份</p>
-          <h2>發放季度實領</h2>
-          <p class="quarter-section-desc">
-            這一季<strong>實際入帳</strong>會領到多少。金額仍依各案的回簽季度計算，只是按收款時間歸類。
-          </p>
-        </div>
-      </div>
-      <div v-if="summary.paid.length === 0" class="empty">尚無發放季度資料</div>
-      <div v-else class="quarter-grid">
-        <article
-          v-for="item in summary.paid"
-          :key="item.key"
-          class="quarter-card quarter-card--paid"
-          :class="{ 'is-filtered': isFilteredQuarter(item.key) }"
-        >
-          <div class="quarter-card-top">
-            <span class="quarter-badge">{{ item.key }}</span>
-            <span class="quarter-meta">{{ item.range }} · {{ item.count }} 筆收款</span>
-          </div>
-          <div class="quarter-hero">
-            <span class="quarter-hero-label">實領獎金</span>
-            <strong
-              class="quarter-hero-amount"
-              :class="{ 'is-muted': item.computableCount === 0 }"
-            >
-              {{ item.computableCount > 0 ? money.format(item.final) : '無法計算' }}
-            </strong>
-          </div>
-          <p class="quarter-footnote">
-            <template v-if="item.computableCount > 0">{{ item.computableCount }} 筆計入</template>
-            <template v-if="item.count > item.computableCount">
-              <span v-if="item.computableCount > 0"> · </span>
-              {{ item.count - item.computableCount }} 筆無倍率未計入
-            </template>
-            <template v-if="item.computableCount === 0 && item.count > 0"> 皆為無倍率季度</template>
-          </p>
-        </article>
-      </div>
-    </section>
+    <PaidQuarterStats v-show="isSectionVisible('paid')" />
   </main>
 </template>

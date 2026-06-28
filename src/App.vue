@@ -8,8 +8,8 @@ import QuarterContextBar from '@/components/layout/QuarterContextBar.vue'
   <div class="site-layout">
     <nav class="sidebar">
       <div class="sidebar-header">
-        <span class="sidebar-brand">季度獎金帳本</span>
-        <span class="sidebar-sub">Saiens AM</span>
+        <span class="sidebar-brand">Ivy的獎金</span>
+        <span class="sidebar-sub">季度獎金帳本</span>
       </div>
       <ul class="sidebar-nav">
         <li>

@@ -1,6 +1,6 @@
-# Saiens 季度獎金帳本
+# Ivy的獎金
 
-Vue + TypeScript 前端，搭配 Node.js Express proxy 抓取 Saiens 報價單資料。
+Vue + TypeScript 前端，搭配 FastAPI proxy 抓取報價單資料的季度獎金帳本。
 
 ## 啟動
 
