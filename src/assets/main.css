@@ -396,7 +396,7 @@
     align-items: center;
     margin: 0 auto;
     width: min(var(--layout-content-max), calc(100% - 40px));
-    padding: 14px 18px;
+    padding: 10px 16px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     background: rgba(255, 255, 255, 0.52);
     backdrop-filter: blur(18px) saturate(140%);
@@ -404,26 +404,17 @@
   }
 
   .quarter-context-label {
-    margin: 0;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
     color: var(--color-muted);
+    font-weight: 600;
   }
 
   .quarter-context-title {
-    margin: 2px 0 0;
-    font-size: 15px;
+    margin: 0;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--color-ink);
-  }
-
-  .quarter-context-hint {
-    margin: 2px 0 0;
-    font-size: 11px;
-    color: var(--color-muted);
+    line-height: 1.35;
   }
 
   .quarter-filter {
@@ -445,21 +436,14 @@
     .quarter-context-bar {
       position: static;
       grid-template-columns: 1fr;
-      gap: 10px;
+      gap: 8px;
       width: min(var(--layout-content-max), calc(100% - 24px));
-      padding: 10px 12px;
+      padding: 8px 12px;
       margin-bottom: -4px;
     }
 
-    .quarter-context-label,
-    .quarter-context-hint {
-      display: none;
-    }
-
     .quarter-context-title {
-      margin: 0;
-      font-size: 14px;
-      line-height: 1.3;
+      font-size: 13px;
     }
 
     .quarter-filter {

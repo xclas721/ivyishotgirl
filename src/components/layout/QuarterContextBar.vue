@@ -11,11 +11,10 @@ const showBar = computed(() => route.path === '/' || route.path === '/multiplier
 
 <template>
   <div v-if="showBar" class="quarter-context-bar">
-    <div class="quarter-context-main">
-      <p class="quarter-context-label">工作季度</p>
-      <p class="quarter-context-title">{{ filterContextLabel }}</p>
-      <p class="quarter-context-hint">篩選看回簽月份，實領看收款月份</p>
-    </div>
+    <p class="quarter-context-title">
+      <span class="quarter-context-label">工作季度</span>
+      {{ filterContextLabel }}
+    </p>
     <QuarterFilter />
   </div>
 </template>
