@@ -21,18 +21,24 @@ const paidCount = computed(() => paidVisibleRecords.value.length)
 const accrualFlash = ref(false)
 const payoutFlash = ref(false)
 
-watch(accrualTotal, () => {
-  accrualFlash.value = true
-  window.setTimeout(() => {
-    accrualFlash.value = false
-  }, 560)
+function triggerFlash(target: { value: boolean }) {
+  target.value = false
+  window.requestAnimationFrame(() => {
+    target.value = true
+    window.setTimeout(() => {
+      target.value = false
+    }, 560)
+  })
+}
+
+watch(accrualTotal, (next, prev) => {
+  if (prev === undefined || next === prev) return
+  triggerFlash(accrualFlash)
 })
 
-watch(payoutTotal, () => {
-  payoutFlash.value = true
-  window.setTimeout(() => {
-    payoutFlash.value = false
-  }, 560)
+watch(payoutTotal, (next, prev) => {
+  if (prev === undefined || next === prev) return
+  triggerFlash(payoutFlash)
 })
 </script>
 

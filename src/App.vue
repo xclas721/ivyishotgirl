@@ -43,9 +43,24 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
+function getScrollbarWidth() {
+  return window.innerWidth - document.documentElement.clientWidth
+}
+
 function syncBodyScrollLock(open: boolean) {
   if (!window.matchMedia('(max-width: 768px)').matches) return
-  document.body.style.overflow = open ? 'hidden' : ''
+
+  if (open) {
+    const scrollbarWidth = getScrollbarWidth()
+    document.body.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`)
+    document.body.style.paddingRight = scrollbarWidth > 0 ? `${scrollbarWidth}px` : ''
+    document.body.classList.add('is-scroll-locked')
+    return
+  }
+
+  document.body.classList.remove('is-scroll-locked')
+  document.body.style.paddingRight = ''
+  document.body.style.removeProperty('--scrollbar-width')
 }
 
 watch(
@@ -65,7 +80,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
-  document.body.style.overflow = ''
+  document.body.classList.remove('is-scroll-locked')
+  document.body.style.paddingRight = ''
+  document.body.style.removeProperty('--scrollbar-width')
 })
 </script>
 
