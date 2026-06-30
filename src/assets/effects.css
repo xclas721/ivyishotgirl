@@ -222,6 +222,16 @@
     animation: fx-shimmer 1.1s var(--fx-ease-soft) 1;
   }
 
+  @media (hover: none), (max-width: 768px) {
+    .panel::after {
+      display: none;
+    }
+
+    .panel:hover::after {
+      animation: none;
+    }
+  }
+
   /* ── Sidebar active glow bar ── */
   .sidebar-link {
     position: relative;
@@ -342,6 +352,58 @@
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.6),
       0 8px 24px rgba(168, 113, 46, 0.12);
+  }
+
+  @media (max-width: 768px) {
+    @keyframes fx-rise-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fx-rise-out {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+    }
+
+    @keyframes fx-kpi-flash {
+      0% {
+        color: var(--color-copper);
+      }
+      100% {
+        color: inherit;
+      }
+    }
+
+    .quarter-context-bar,
+    .app-shell > .panel,
+    .app-shell > .ledger-tabs,
+    .app-shell > .page-head {
+      animation: none;
+    }
+
+    .fx-page-enter-active,
+    .fx-page-leave-active,
+    .fx-section-enter-active,
+    .fx-section-leave-active {
+      animation: none;
+    }
+
+    .context-kpi-value.fx-kpi-flash {
+      transform: none;
+      text-shadow: none;
+    }
   }
 }
 
