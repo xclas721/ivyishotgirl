@@ -44,7 +44,7 @@ npm start
         </label>
         <label class="add-url-field add-url-field--type">
           客戶類型
-          <select v-model="draft.customerType">
+          <select v-model="draft.customerType" class="type-select">
             <option
               v-for="option in CUSTOMER_TYPE_OPTIONS"
               :key="option.value"
