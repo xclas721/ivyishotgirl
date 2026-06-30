@@ -322,6 +322,8 @@
     margin-top: auto;
     padding: 12px 8px 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: grid;
+    gap: 4px;
   }
 
   .sidebar-logout {
@@ -1737,6 +1739,114 @@
 
   .db-error-close:hover {
     opacity: 1;
+  }
+
+  /* Change password modal */
+  .password-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(20, 19, 17, 0.38);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .password-modal {
+    width: min(100%, 400px);
+    display: grid;
+    gap: 14px;
+    padding: 22px 22px 18px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow:
+      0 18px 50px -20px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .password-modal-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .password-modal-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: var(--color-copper);
+    background: rgba(168, 113, 46, 0.1);
+    border: 1px solid rgba(168, 113, 46, 0.18);
+  }
+
+  .password-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .password-modal-sub {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--color-muted);
+  }
+
+  .password-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    min-height: 0;
+  }
+
+  .password-modal-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: none;
+  }
+
+  .password-modal-field {
+    display: grid;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-muted);
+  }
+
+  .password-modal-message {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  .password-modal-message--error {
+    color: var(--color-danger);
+  }
+
+  .password-modal-message--ok {
+    color: var(--color-success);
+  }
+
+  .password-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 4px;
   }
 
   /* Server notice */
