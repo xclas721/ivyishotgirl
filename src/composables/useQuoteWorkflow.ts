@@ -34,7 +34,7 @@ function newQuoteDraftRow(): QuoteDraftRow {
 }
 
 export function useQuoteWorkflow() {
-  const visibleSections = ref<LedgerTabId[]>(['overview', 'records'])
+  const visibleSections = ref<LedgerTabId[]>(['records'])
   const quoteDrafts = ref<QuoteDraftRow[]>([newQuoteDraftRow()])
   const status = reactive({ message: '', tone: '' })
   const isFetching = ref(false)

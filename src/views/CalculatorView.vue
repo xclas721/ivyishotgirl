@@ -51,22 +51,6 @@ const {
     <LedgerTabs v-model="visibleSections" />
 
     <Transition name="fx-section">
-      <QuoteAddForm
-        v-if="isSectionVisible('overview')"
-        :quote-drafts="quoteDrafts"
-        :is-fetching="isFetching"
-        :is-file-mode="isFileMode"
-        :is-loading="isLoading"
-        :status-message="status.message"
-        :status-tone="status.tone"
-        :fetch-button-label="fetchButtonLabel()"
-        @fetch="fetchQuotes"
-        @add-row="addQuoteDraftRow"
-        @remove-row="removeQuoteDraftRow"
-      />
-    </Transition>
-
-    <Transition name="fx-section">
       <LedgerOverviewPanel
         v-if="isSectionVisible('overview')"
         :summary="ledgerSummary"
@@ -75,21 +59,37 @@ const {
       />
     </Transition>
 
-    <Transition name="fx-section">
-      <RecordsSection
-        v-if="isSectionVisible('records')"
-        :records="visibleRecords"
-        :all-records-count="records.length"
-        :highlight-id="highlightedRecordId"
-        :is-file-mode="isFileMode"
-        :is-loading="isLoading"
-        :is-syncing-all="isSyncingAll"
-        :syncing-ids="syncingIds"
-        @resync-all="resyncAllVisible"
-        @resync="resyncRecord"
-        @delete="deleteRecord"
-      />
-    </Transition>
+    <template v-if="isSectionVisible('records')">
+      <Transition name="fx-section">
+        <QuoteAddForm
+          :quote-drafts="quoteDrafts"
+          :is-fetching="isFetching"
+          :is-file-mode="isFileMode"
+          :is-loading="isLoading"
+          :status-message="status.message"
+          :status-tone="status.tone"
+          :fetch-button-label="fetchButtonLabel()"
+          @fetch="fetchQuotes"
+          @add-row="addQuoteDraftRow"
+          @remove-row="removeQuoteDraftRow"
+        />
+      </Transition>
+
+      <Transition name="fx-section">
+        <RecordsSection
+          :records="visibleRecords"
+          :all-records-count="records.length"
+          :highlight-id="highlightedRecordId"
+          :is-file-mode="isFileMode"
+          :is-loading="isLoading"
+          :is-syncing-all="isSyncingAll"
+          :syncing-ids="syncingIds"
+          @resync-all="resyncAllVisible"
+          @resync="resyncRecord"
+          @delete="deleteRecord"
+        />
+      </Transition>
+    </template>
 
     <Transition name="fx-section">
       <SignedQuarterStats v-if="isSectionVisible('signed')" />

@@ -6,8 +6,8 @@ export type LedgerTabId = 'overview' | 'records' | 'signed' | 'paid'
 const model = defineModel<LedgerTabId[]>({ required: true })
 
 const tabs: { id: LedgerTabId; label: string; hint: string }[] = [
-  { id: 'overview', label: '總覽', hint: 'KPI 與新增' },
-  { id: 'records', label: '案件明細', hint: '表格編輯' },
+  { id: 'overview', label: '總覽', hint: 'KPI 與匯出' },
+  { id: 'records', label: '案件明細', hint: '新增與表格' },
   { id: 'signed', label: '回簽試算', hint: '依回簽季度' },
   { id: 'paid', label: '發放實領', hint: '依收款季度' },
 ]
