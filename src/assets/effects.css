@@ -317,15 +317,6 @@
     animation: fx-gate-out var(--fx-duration-normal) var(--fx-ease-soft) both;
   }
 
-  /* ── Vue transitions: ledger section panels ── */
-  .fx-section-enter-active {
-    animation: fx-rise-in var(--fx-duration-normal) var(--fx-ease-out) both;
-  }
-
-  .fx-section-leave-active {
-    animation: fx-rise-out var(--fx-duration-fast) var(--fx-ease-soft) both;
-  }
-
   /* ── Vue transitions: status toast ── */
   .fx-status-enter-active {
     animation: fx-rise-in var(--fx-duration-fast) var(--fx-ease-spring) both;
@@ -333,11 +324,6 @@
 
   .fx-status-leave-active {
     animation: fx-rise-out 0.15s var(--fx-ease-soft) both;
-  }
-
-  /* ── Quarter context bar subtle entrance ── */
-  .quarter-context-bar {
-    animation: fx-rise-in var(--fx-duration-normal) var(--fx-ease-out) both;
   }
 
   /* ── Primary total card glow ── */
@@ -394,9 +380,7 @@
     }
 
     .fx-page-enter-active,
-    .fx-page-leave-active,
-    .fx-section-enter-active,
-    .fx-section-leave-active {
+    .fx-page-leave-active {
       animation: none;
     }
 

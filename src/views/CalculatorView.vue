@@ -46,53 +46,43 @@ const {
       <span v-if="apiOk" class="badge ok fx-badge-enter">API 已連線</span>
     </header>
 
-    <Transition name="fx-section">
-      <LedgerOverviewPanel
-        v-if="isSectionVisible('overview')"
-        :summary="ledgerSummary"
-        :record-count="visibleRecords.length"
-        @export-csv="exportCsv"
-      />
-    </Transition>
+    <LedgerOverviewPanel
+      v-if="isSectionVisible('overview')"
+      :summary="ledgerSummary"
+      :record-count="visibleRecords.length"
+      @export-csv="exportCsv"
+    />
 
     <template v-if="isSectionVisible('records')">
-      <Transition name="fx-section">
-        <QuoteAddForm
-          :quote-drafts="quoteDrafts"
-          :is-fetching="isFetching"
-          :is-file-mode="isFileMode"
-          :is-loading="isLoading"
-          :status-message="status.message"
-          :status-tone="status.tone"
-          :fetch-button-label="fetchButtonLabel()"
-          @fetch="fetchQuotes"
-          @add-row="addQuoteDraftRow"
-          @remove-row="removeQuoteDraftRow"
-        />
-      </Transition>
+      <QuoteAddForm
+        :quote-drafts="quoteDrafts"
+        :is-fetching="isFetching"
+        :is-file-mode="isFileMode"
+        :is-loading="isLoading"
+        :status-message="status.message"
+        :status-tone="status.tone"
+        :fetch-button-label="fetchButtonLabel()"
+        @fetch="fetchQuotes"
+        @add-row="addQuoteDraftRow"
+        @remove-row="removeQuoteDraftRow"
+      />
 
-      <Transition name="fx-section">
-        <RecordsSection
-          :records="visibleRecords"
-          :all-records-count="records.length"
-          :highlight-id="highlightedRecordId"
-          :is-file-mode="isFileMode"
-          :is-loading="isLoading"
-          :is-syncing-all="isSyncingAll"
-          :syncing-ids="syncingIds"
-          @resync-all="resyncAllVisible"
-          @resync="resyncRecord"
-          @delete="deleteRecord"
-        />
-      </Transition>
+      <RecordsSection
+        :records="visibleRecords"
+        :all-records-count="records.length"
+        :highlight-id="highlightedRecordId"
+        :is-file-mode="isFileMode"
+        :is-loading="isLoading"
+        :is-syncing-all="isSyncingAll"
+        :syncing-ids="syncingIds"
+        @resync-all="resyncAllVisible"
+        @resync="resyncRecord"
+        @delete="deleteRecord"
+      />
     </template>
 
-    <Transition name="fx-section">
-      <SignedQuarterStats v-if="isSectionVisible('signed')" />
-    </Transition>
+    <SignedQuarterStats v-if="isSectionVisible('signed')" />
 
-    <Transition name="fx-section">
-      <PaidQuarterStats v-if="isSectionVisible('paid')" />
-    </Transition>
+    <PaidQuarterStats v-if="isSectionVisible('paid')" />
   </main>
 </template>

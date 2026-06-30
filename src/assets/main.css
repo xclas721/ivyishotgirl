@@ -39,15 +39,23 @@
   }
 
   html {
-    /* Elegant Winter marble — public/marble-bg.jpg (MQ-751) */
+    background-color: #e9ecef;
+    min-height: 100%;
+    overflow-x: clip;
+    scrollbar-gutter: stable;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
     background-color: #e9ecef;
     background-image: url('/marble-bg.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-attachment: fixed;
-    min-height: 100%;
-    overflow-x: clip;
+    pointer-events: none;
   }
 
   body {
@@ -396,6 +404,8 @@
     background: rgba(255, 255, 255, 0.52);
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
+    contain: layout style;
+    transform: translateZ(0);
   }
 
   .quarter-context-bar {
@@ -601,11 +611,6 @@
 
     .site-main {
       padding-top: 56px;
-    }
-
-    /* mobile: no fixed marble — iOS Safari compat */
-    html {
-      background-attachment: scroll;
     }
   }
 }
