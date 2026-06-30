@@ -2,18 +2,14 @@
   <main class="app-shell">
     <header class="page-head">
       <div>
-        <h1>AM 業績獎金規則</h1>
+        <h1>獎金規則摘要</h1>
         <p>
-          AM 業績獎金新制 V2 — 獎金按回簽季度算，發放時間看收款季度。這頁是帳本的試算摘要，完整制度以官方文件為準。
+          Ivy的獎金帳本依 AM 業績獎金新制 V2
+          試算：<strong>回簽月份</strong>決定基礎%與季度倍率，<strong>收款月份</strong>決定發放季度。完整制度以官方文件為準。
         </p>
       </div>
       <div class="head-controls">
-        <a
-          class="rules-source-link"
-          :href="COMMISSION_RULES_URL"
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a class="rules-source-link" :href="COMMISSION_RULES_URL" target="_blank" rel="noreferrer">
           <ExternalLink :size="14" :stroke-width="2" />
           官方制度說明（V2）
         </a>
@@ -130,14 +126,18 @@
       <ul class="rules-list">
         <li>
           完整制度說明、倍率區間與實施時程見
-          <a :href="COMMISSION_RULES_URL" target="_blank" rel="noreferrer">AM 業績獎金新制 V2 官方文件</a>。
+          <a :href="COMMISSION_RULES_URL" target="_blank" rel="noreferrer"
+            >AM 業績獎金新制 V2 官方文件</a
+          >。
         </li>
         <li>獎金以回簽月份決定所屬季度，與收款月份無關。</li>
         <li>收款月份決定發放季度（實際領取時間）。</li>
         <li>同一季的案子共用一組倍率，整季一致。</li>
         <li>倍率自 2026-Q2 起適用；在此之前的季度（含 2026-Q1）只計基礎獎金，不套用倍率。</li>
         <li>1 月回簽歸入前一年度 Q4（11 月 – 次年 1 月）。</li>
-        <li>客戶類型於新增報價單時選擇，表格中可隨時更改；基礎獎金% 由類型自動帶入，再同步不覆寫類型。</li>
+        <li>
+          客戶類型於新增報價單時選擇，表格中可隨時更改；基礎獎金% 由類型自動帶入，再同步不覆寫類型。
+        </li>
         <li>金額以報價單的「未連稅金額」為準。</li>
       </ul>
     </section>

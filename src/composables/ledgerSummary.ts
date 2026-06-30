@@ -3,12 +3,7 @@ import { getFiscalQuarter, multipliersApply } from '@/shared/fiscalQuarter'
 import type { QuarterInfo } from '@/shared/fiscalQuarter'
 import type { BonusRecord } from '@/lib/db'
 import { commissionRateFor } from '@/shared/customerType'
-import {
-  visibleRecords,
-  paidVisibleRecords,
-  multiplierFor,
-  toNumber,
-} from '@/composables/ledger'
+import { visibleRecords, paidVisibleRecords, multiplierFor, toNumber } from '@/composables/ledger'
 
 export interface QuarterSummary extends QuarterInfo {
   count: number

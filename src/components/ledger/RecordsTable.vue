@@ -111,11 +111,7 @@ function isSyncing(id: string) {
               :class="{ unknown: record.customerType === 'unknown' }"
               :value="record.customerType"
               @change="
-                updateRecord(
-                  record,
-                  'customerType',
-                  ($event.target as HTMLSelectElement).value,
-                )
+                updateRecord(record, 'customerType', ($event.target as HTMLSelectElement).value)
               "
             >
               <option v-if="record.customerType === 'unknown'" value="unknown" disabled>
@@ -167,11 +163,7 @@ function isSyncing(id: string) {
               min="0"
               step="1"
               @input="
-                updateRecord(
-                  record,
-                  'taxExcludedAmount',
-                  ($event.target as HTMLInputElement).value,
-                )
+                updateRecord(record, 'taxExcludedAmount', ($event.target as HTMLInputElement).value)
               "
             />
           </td>
@@ -182,11 +174,7 @@ function isSyncing(id: string) {
               min="0"
               step="1"
               @input="
-                updateRecord(
-                  record,
-                  'taxIncludedAmount',
-                  ($event.target as HTMLInputElement).value,
-                )
+                updateRecord(record, 'taxIncludedAmount', ($event.target as HTMLInputElement).value)
               "
             />
           </td>

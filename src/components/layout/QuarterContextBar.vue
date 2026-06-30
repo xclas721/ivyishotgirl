@@ -2,11 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import QuarterFilter from '@/components/ui/QuarterFilter.vue'
-import {
-  filterContextLabel,
-  paidVisibleRecords,
-  visibleRecords,
-} from '@/composables/ledger'
+import { filterContextLabel, paidVisibleRecords, visibleRecords } from '@/composables/ledger'
 import { accrualTotal, payoutTotal } from '@/composables/ledgerSummary'
 
 const route = useRoute()
