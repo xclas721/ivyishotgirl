@@ -3,6 +3,13 @@ import { Eye, EyeOff } from 'lucide-vue-next'
 
 export type LedgerTabId = 'overview' | 'records' | 'signed' | 'paid'
 
+withDefaults(
+  defineProps<{
+    layout?: 'default' | 'bar'
+  }>(),
+  { layout: 'default' },
+)
+
 const model = defineModel<LedgerTabId[]>({ required: true })
 
 const tabs: { id: LedgerTabId; label: string; hint: string }[] = [
@@ -26,7 +33,12 @@ function toggleTab(id: LedgerTabId) {
 </script>
 
 <template>
-  <nav class="ledger-tabs" role="tablist" aria-label="帳本區塊">
+  <nav
+    class="ledger-tabs"
+    :class="{ 'ledger-tabs--bar': layout === 'bar' }"
+    role="tablist"
+    aria-label="帳本區塊"
+  >
     <button
       v-for="tab in tabs"
       :key="tab.id"
@@ -55,7 +67,7 @@ function toggleTab(id: LedgerTabId) {
         />
         <span class="ledger-tab-label">{{ tab.label }}</span>
       </span>
-      <span class="ledger-tab-hint">{{ tab.hint }}</span>
+      <span v-if="layout !== 'bar'" class="ledger-tab-hint">{{ tab.hint }}</span>
     </button>
   </nav>
 </template>

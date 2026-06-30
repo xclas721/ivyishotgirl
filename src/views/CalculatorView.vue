@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import DbStatusBanner from '@/components/layout/DbStatusBanner.vue'
-import LedgerTabs from '@/components/ledger/LedgerTabs.vue'
 import QuoteAddForm from '@/components/calculator/QuoteAddForm.vue'
 import LedgerOverviewPanel from '@/components/calculator/LedgerOverviewPanel.vue'
 import RecordsSection from '@/components/calculator/RecordsSection.vue'
@@ -10,7 +9,6 @@ import { useQuoteWorkflow } from '@/composables/useQuoteWorkflow'
 import { ledgerSummary } from '@/composables/ledgerSummary'
 
 const {
-  visibleSections,
   quoteDrafts,
   status,
   isFetching,
@@ -47,8 +45,6 @@ const {
       </div>
       <span v-if="apiOk" class="badge ok fx-badge-enter">API 已連線</span>
     </header>
-
-    <LedgerTabs v-model="visibleSections" />
 
     <Transition name="fx-section">
       <LedgerOverviewPanel

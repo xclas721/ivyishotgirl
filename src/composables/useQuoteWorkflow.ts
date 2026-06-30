@@ -1,5 +1,4 @@
 import { nextTick, onMounted, reactive, ref } from 'vue'
-import type { LedgerTabId } from '@/components/ledger/LedgerTabs.vue'
 import type { BonusRecord, CustomerType } from '@/lib/db'
 import { defaultCustomerType } from '@/shared/customerType'
 import { exportVisibleRecordsCsv } from '@/lib/csvExport'
@@ -22,6 +21,7 @@ import {
   upsertRecord,
   visibleRecords,
 } from '@/composables/ledger'
+import { useLedgerSections } from '@/composables/ledgerSections'
 
 export interface QuoteDraftRow {
   url: string
@@ -34,7 +34,7 @@ function newQuoteDraftRow(): QuoteDraftRow {
 }
 
 export function useQuoteWorkflow() {
-  const visibleSections = ref<LedgerTabId[]>(['records'])
+  const { isSectionVisible, ensureSectionVisible } = useLedgerSections()
   const quoteDrafts = ref<QuoteDraftRow[]>([newQuoteDraftRow()])
   const status = reactive({ message: '', tone: '' })
   const isFetching = ref(false)
@@ -177,16 +177,6 @@ export function useQuoteWorkflow() {
     }, 4000)
   }
 
-  function isSectionVisible(id: LedgerTabId) {
-    return visibleSections.value.includes(id)
-  }
-
-  function ensureSectionVisible(id: LedgerTabId) {
-    if (!visibleSections.value.includes(id)) {
-      visibleSections.value = [...visibleSections.value, id]
-    }
-  }
-
   async function syncRecordFromQuote(record: BonusRecord) {
     const inputUrl = record.quoteUrl?.trim()
     if (!inputUrl) throw new Error('這筆沒有可同步的網址。')
@@ -288,7 +278,6 @@ export function useQuoteWorkflow() {
   }
 
   return {
-    visibleSections,
     quoteDrafts,
     status,
     isFetching,
