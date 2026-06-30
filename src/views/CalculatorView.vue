@@ -45,48 +45,58 @@ const {
           回簽月份決定獎金%和倍率，收款月份決定哪一季發放。金額看報價單的「未連稅金額」和「總計」。
         </p>
       </div>
-      <span v-if="apiOk" class="badge ok">API 已連線</span>
+      <span v-if="apiOk" class="badge ok fx-badge-enter">API 已連線</span>
     </header>
 
     <LedgerTabs v-model="visibleSections" />
 
-    <QuoteAddForm
-      v-show="isSectionVisible('overview')"
-      :quote-drafts="quoteDrafts"
-      :is-fetching="isFetching"
-      :is-file-mode="isFileMode"
-      :is-loading="isLoading"
-      :status-message="status.message"
-      :status-tone="status.tone"
-      :fetch-button-label="fetchButtonLabel()"
-      @fetch="fetchQuotes"
-      @add-row="addQuoteDraftRow"
-      @remove-row="removeQuoteDraftRow"
-    />
+    <Transition name="fx-section">
+      <QuoteAddForm
+        v-if="isSectionVisible('overview')"
+        :quote-drafts="quoteDrafts"
+        :is-fetching="isFetching"
+        :is-file-mode="isFileMode"
+        :is-loading="isLoading"
+        :status-message="status.message"
+        :status-tone="status.tone"
+        :fetch-button-label="fetchButtonLabel()"
+        @fetch="fetchQuotes"
+        @add-row="addQuoteDraftRow"
+        @remove-row="removeQuoteDraftRow"
+      />
+    </Transition>
 
-    <LedgerOverviewPanel
-      v-show="isSectionVisible('overview')"
-      :summary="ledgerSummary"
-      :record-count="visibleRecords.length"
-      @export-csv="exportCsv"
-    />
+    <Transition name="fx-section">
+      <LedgerOverviewPanel
+        v-if="isSectionVisible('overview')"
+        :summary="ledgerSummary"
+        :record-count="visibleRecords.length"
+        @export-csv="exportCsv"
+      />
+    </Transition>
 
-    <RecordsSection
-      v-show="isSectionVisible('records')"
-      :records="visibleRecords"
-      :all-records-count="records.length"
-      :highlight-id="highlightedRecordId"
-      :is-file-mode="isFileMode"
-      :is-loading="isLoading"
-      :is-syncing-all="isSyncingAll"
-      :syncing-ids="syncingIds"
-      @resync-all="resyncAllVisible"
-      @resync="resyncRecord"
-      @delete="deleteRecord"
-    />
+    <Transition name="fx-section">
+      <RecordsSection
+        v-if="isSectionVisible('records')"
+        :records="visibleRecords"
+        :all-records-count="records.length"
+        :highlight-id="highlightedRecordId"
+        :is-file-mode="isFileMode"
+        :is-loading="isLoading"
+        :is-syncing-all="isSyncingAll"
+        :syncing-ids="syncingIds"
+        @resync-all="resyncAllVisible"
+        @resync="resyncRecord"
+        @delete="deleteRecord"
+      />
+    </Transition>
 
-    <SignedQuarterStats v-show="isSectionVisible('signed')" />
+    <Transition name="fx-section">
+      <SignedQuarterStats v-if="isSectionVisible('signed')" />
+    </Transition>
 
-    <PaidQuarterStats v-show="isSectionVisible('paid')" />
+    <Transition name="fx-section">
+      <PaidQuarterStats v-if="isSectionVisible('paid')" />
+    </Transition>
   </main>
 </template>

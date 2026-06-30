@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import QuarterFilter from '@/components/ui/QuarterFilter.vue'
 import { filterContextLabel, paidVisibleRecords, visibleRecords } from '@/composables/ledger'
@@ -17,6 +17,23 @@ const money = new Intl.NumberFormat('zh-TW', {
 
 const signedCount = computed(() => visibleRecords.value.length)
 const paidCount = computed(() => paidVisibleRecords.value.length)
+
+const accrualFlash = ref(false)
+const payoutFlash = ref(false)
+
+watch(accrualTotal, () => {
+  accrualFlash.value = true
+  window.setTimeout(() => {
+    accrualFlash.value = false
+  }, 560)
+})
+
+watch(payoutTotal, () => {
+  payoutFlash.value = true
+  window.setTimeout(() => {
+    payoutFlash.value = false
+  }, 560)
+})
 </script>
 
 <template>
@@ -31,13 +48,17 @@ const paidCount = computed(() => paidVisibleRecords.value.length)
       <div class="context-kpi context-kpi--accrual">
         <span class="context-kpi-label context-kpi-label--long">應計獎金</span>
         <span class="context-kpi-label context-kpi-label--short">應計</span>
-        <strong class="context-kpi-value">{{ money.format(accrualTotal) }}</strong>
+        <strong class="context-kpi-value" :class="{ 'fx-kpi-flash': accrualFlash }">{{
+          money.format(accrualTotal)
+        }}</strong>
         <span class="context-kpi-meta">{{ signedCount }} 筆回簽</span>
       </div>
       <div class="context-kpi context-kpi--payout">
         <span class="context-kpi-label context-kpi-label--long">實領（本季收款）</span>
         <span class="context-kpi-label context-kpi-label--short">實領</span>
-        <strong class="context-kpi-value">{{ money.format(payoutTotal) }}</strong>
+        <strong class="context-kpi-value" :class="{ 'fx-kpi-flash': payoutFlash }">{{
+          money.format(payoutTotal)
+        }}</strong>
         <span class="context-kpi-meta">{{ paidCount }} 筆收款</span>
       </div>
     </div>

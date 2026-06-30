@@ -81,6 +81,7 @@ npm start
         </button>
         <button
           type="button"
+          :class="{ 'fx-btn-loading': isFetching }"
           :disabled="isFetching || isFileMode || isLoading"
           @click="emit('fetch')"
         >
@@ -89,6 +90,10 @@ npm start
       </div>
     </div>
     <p class="hint">回簽月份與案件業務會從報價單自動帶入；每列再選客戶類型與收款月份。</p>
-    <p class="status" :class="statusTone">{{ statusMessage }}</p>
+    <Transition name="fx-status">
+      <p v-if="statusMessage" :key="statusMessage" class="status" :class="statusTone">
+        {{ statusMessage }}
+      </p>
+    </Transition>
   </section>
 </template>
