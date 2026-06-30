@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Lock } from 'lucide-vue-next'
-import { tryUnlock } from '@/composables/gate'
+import { tryUnlock, sessionExpired } from '@/composables/gate'
 
 const password = ref('')
 const error = ref('')
@@ -45,7 +45,9 @@ async function submit() {
         <Lock :size="20" :stroke-width="1.6" />
       </span>
       <h1 class="gate-title">Ivy的獎金</h1>
-      <p class="gate-sub">請輸入密碼進入</p>
+      <p class="gate-sub" :class="{ 'gate-sub--expired': sessionExpired }">
+        {{ sessionExpired ? '登入已過期，請重新輸入密碼' : '請輸入密碼進入' }}
+      </p>
       <input
         v-model="password"
         class="gate-input"
@@ -121,6 +123,10 @@ async function submit() {
   margin: 0 0 6px;
   font-size: 13px;
   color: var(--color-muted);
+}
+
+.gate-sub--expired {
+  color: var(--color-danger);
 }
 
 .gate-input {

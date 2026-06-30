@@ -4,11 +4,9 @@ import { LayoutDashboard, LogOut, ScrollText, SlidersHorizontal } from 'lucide-v
 import QuarterContextBar from '@/components/layout/QuarterContextBar.vue'
 import PasswordGate from '@/components/PasswordGate.vue'
 import { isUnlocked, authReady, lock } from '@/composables/gate'
-import { resetLedger } from '@/composables/ledger'
 
 async function handleLogout() {
   await lock()
-  resetLedger()
 }
 </script>
 

@@ -351,3 +351,9 @@ export function resetLedger() {
   dbError.value = ''
   isLoading.value = true
 }
+
+export function reloadLedger() {
+  dbError.value = ''
+  loadPromise = null
+  return ensureLoaded()
+}
