@@ -2,25 +2,30 @@
 
 **專案：** `ivyishotgirl`  
 **Repo：** https://github.com/xclas721/ivyishotgirl  
-**分支：** `main`（最新功能 commit：`b22dcf6` — 簡易登入閘 + RLS）  
+**分支：** `main`  
 **維護者：** Kyson Wang  
 **需求規格：** [需求清單.md](./需求清單.md)  
 **AI Spec：** [spec/spec-architecture-auth-multi-account-rls.md](../spec/spec-architecture-auth-multi-account-rls.md)  
-**UX 規劃：** [ui-ux-plan.md](./ui-ux-plan.md)（若本機有；Git 歷史已移除）  
+**UX 規劃：** [ui-ux-plan.md](./ui-ux-plan.md)  
 **接手提示詞：** [handoff-prompt.md](./handoff-prompt.md)
 
 ---
 
-## 0. 目前實作現況（2026-06-29）
+## 0. 目前實作現況（2026-06-30）
 
-**線上已上線（過渡方案）**
+**線上已上線（過渡方案 — 個人／小團隊共用）**
 
 | 項目             | 現況                                                                                                                     |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | 登入             | **單一共用帳號** — Supabase Auth `gate@ivy.app`，UI 只問密碼；經 **`POST /api/gate-login`** 代理（**10 次/分/IP** 限流） |
+| 登出             | 側欄「登出」→ `signOut` + 清空記憶體帳本                                                                                 |
+| Session 過期     | JWT 失效時自動回密碼閘，顯示「登入已過期」                                                                               |
 | 未登入           | **硬閘** — 看不到帳本，無訪客試算                                                                                        |
 | RLS              | **已啟用** — `bonus_records`、`quarter_multipliers` 僅 `authenticated` 可讀寫（[`schema.sql`](../supabase/schema.sql)）  |
-| 多帳號／業務隔離 | **尚未實作**                                                                                                             |
+| 多帳號／業務隔離 | **尚未實作**（spec §2–§5 待決）                                                                                          |
+| 工程品質         | GitHub Actions CI、Vitest 單元測試、Prettier                                                                             |
+| 視覺特效         | `src/assets/effects.css`（頁面切換、KPI 閃爍、表格聚光等）                                                               |
+| 報價抓取         | **httpx** 靜態 HTML；Playwright fallback **尚未實作**                                                                    |
 
 **文件 §2–§5 與 spec** 描述的是**正式版（方案 B：多帳號 + 業務隔離 + 管理頁）**，標為待實作；**是否採用尚未定案**。
 
@@ -43,15 +48,17 @@ AM 個人／團隊用的**季度獎金試算帳本**（產品名 **Ivy的獎金*
 
 ## 2. 技術棧
 
-| 層       | 技術                                                    |
-| -------- | ------------------------------------------------------- |
-| 前端     | Vue 3 + TypeScript + Vue Router + Tailwind v4           |
-| 圖示     | lucide-vue-next                                         |
-| 狀態     | `src/composables/ledger.ts`（全域 reactive + Supabase） |
-| 摘要計算 | `src/composables/ledgerSummary.ts`                      |
-| 後端     | FastAPI `api/index.py`（Vercel serverless）             |
-| DB       | Supabase PostgreSQL                                     |
-| 部署     | Vercel（前端 + API）                                    |
+| 層       | 技術                                                         |
+| -------- | ------------------------------------------------------------ |
+| 前端     | Vue 3 + TypeScript + Vue Router + Tailwind v4                |
+| 圖示     | lucide-vue-next                                              |
+| 狀態     | `ledger.ts`、`useQuoteWorkflow.ts`、`gate.ts`                |
+| 摘要計算 | `src/composables/ledgerSummary.ts`                           |
+| 後端     | FastAPI `api/index.py`（Vercel serverless）                  |
+| DB       | Supabase PostgreSQL                                          |
+| 部署     | Vercel（前端 + API）                                         |
+| 測試     | Vitest（前端純函式）、Python unittest（rate limiter）        |
+| CI       | `.github/workflows/ci.yml` — format、type-check、test、build |
 
 ### 啟動
 
@@ -77,19 +84,19 @@ Kyson 慣例：**不要自動 build/test**，除非他明確要求。commit/push
 
 ## 3. 關鍵檔案
 
-| 路徑                                          | 用途                                         |
-| --------------------------------------------- | -------------------------------------------- |
-| `api/index.py`                                | 抓報價 HTML；`extract_sales_rep()` 等        |
-| `src/lib/db.ts`                               | `BonusRecord`、Supabase mapper               |
-| `src/composables/ledger.ts`                   | 紀錄/倍率狀態、篩選、`ensureLoaded`          |
-| `src/composables/ledgerSummary.ts`            | 應計/實領、最終獎金計算                      |
-| `src/shared/fiscalQuarter.ts`                 | 財務季度；`MULTIPLIER_START_KEY = '2026-Q2'` |
-| `src/shared/customerType.ts`                  | 四類客戶 2–5%，% 由類型推導（不存 DB）       |
-| `src/views/CalculatorView.vue`                | 帳本主頁（偏大，待瘦身）                     |
-| `src/components/ledger/RecordsTable.vue`      | 案件表格                                     |
-| `src/components/layout/QuarterContextBar.vue` | 全域季度脈絡 + KPI                           |
-| `supabase/schema.sql`                         | 表結構 + migration 片段                      |
-| `supabase/migrations/`                        | RLS policies（登入階段新增）                 |
+| 路徑                                          | 用途                                             |
+| --------------------------------------------- | ------------------------------------------------ |
+| `api/index.py`                                | 抓報價 HTML；`gate-login`；`extract_sales_rep()` |
+| `src/composables/gate.ts`                     | 密碼閘、session 同步、登出                       |
+| `src/composables/useQuoteWorkflow.ts`         | 抓取／同步／匯出流程                             |
+| `src/lib/db.ts`                               | `BonusRecord`、Supabase mapper                   |
+| `src/composables/ledger.ts`                   | 紀錄/倍率狀態、篩選、`ensureLoaded`              |
+| `src/composables/ledgerSummary.ts`            | 應計/實領、最終獎金計算                          |
+| `src/views/CalculatorView.vue`                | 帳本主頁（薄殼，邏輯在 composable）              |
+| `src/components/ledger/RecordsTable.vue`      | 案件表格                                         |
+| `src/components/layout/QuarterContextBar.vue` | 全域季度脈絡 + KPI                               |
+| `src/assets/effects.css`                      | 視覺特效                                         |
+| `supabase/schema.sql`                         | 表結構 + RLS policy                              |
 
 ### 路由
 
@@ -99,7 +106,7 @@ Kyson 慣例：**不要自動 build/test**，除非他明確要求。commit/push
 | `/multipliers` | 季度倍率                       |
 | `/rules`       | 獎金規則                       |
 | `/admin`       | 帳號管理（**待實作**，僅 ivy） |
-| `/login`       | 登入（**待實作**）             |
+| `/login`       | 登入（**待實作**，正式版）     |
 
 ---
 
@@ -116,7 +123,6 @@ Kyson 慣例：**不要自動 build/test**，除非他明確要求。commit/push
 
 - **新增**時使用者自選客戶類型
 - **再同步**不覆寫客戶類型（`preserveCustomerFields`）
-- 已移除 DB 欄位 `base_commission_rate`
 
 ### 倍率
 
@@ -143,67 +149,32 @@ Kyson 慣例：**不要自動 build/test**，除非他明確要求。commit/push
 
 ### Migration（若新環境或升級）
 
-見 [`supabase/schema.sql`](../supabase/schema.sql) 全文（含 `sales_rep`、RLS policy）。摘要：
-
-```sql
-alter table bonus_records drop column if exists base_commission_rate;
-alter table bonus_records add column if not exists sales_rep text not null default '';
-alter table bonus_records enable row level security;
-alter table quarter_multipliers enable row level security;
--- policy: authenticated full access（見 schema.sql）
-```
+見 [`supabase/schema.sql`](../supabase/schema.sql) 全文（含 `sales_rep`、RLS policy）。
 
 Supabase 需建立 Auth 使用者 **`gate@ivy.app`**（密碼由 Kyson 設定），前端登入後 JWT 才通過 RLS。
-
-### 安全現況（**過渡：簡易閘 + RLS**）
-
-- RLS **已開** — anon key 無法讀寫；須 `signInWithPassword` 取得 session
-- 前端：**單一共用密碼閘**（非多帳號、無訪客試算）
-- 正式版目標：多帳號 + 業務隔離 RLS + 後端建帳 API（見需求清單 §2、§7.1）
 
 ---
 
 ## 6. 已完成 vs 待做
 
-### 已完成（main）
+### 已完成（main，2026-06-30）
 
-- 季度工作檯 UI（`QuarterContextBar`、`LedgerTabs`、`RecordsTable` 分組表頭）
-- 客戶類型四類、倍率 2026-Q2 分界、「無法計算」邏輯
-- Rebrand **Ivy的獎金**、文案潤飾、Vercel 錯誤訊息
-- **案件業務** `sales_rep` 全鏈路（`a017801`）
-- **簡易登入閘** + Supabase Auth + RLS（`540f4d4` → `b22dcf6`）
+- 季度工作檯 UI、案件業務、簡易登入閘 + RLS
+- CalculatorView 拆分、`useQuoteWorkflow`、移除 clearAll
+- CI + Vitest + Python unittest
+- 視覺特效（`effects.css`）
+- 側欄登出、session 過期回閘、DB 錯誤重試
+- README 與 Playwright 文件對齊（httpx 現況）
 
 ### 待做（見 [需求清單.md](./需求清單.md)）
 
-**若採正式版：登入 + 多帳號 + 業務隔離（方案 B）**
-
-摘要（完整規格見需求清單；**不必追求**見 §12）：
-
-1. Supabase Auth + RLS（§7.1 migration）
-2. 後端 API：`/api/auth/login` + admin routes（service role，§2.9）
-3. 未登入：可試算不存（記憶體）；可匯出試算 CSV
-4. fetch-quote：**訪客 20 次/分/IP**，登入不限（§2.8）
-5. 登入帳號 / 顯示名稱分離；ivy 用真實 Auth email
-6. **ivy 首次亦須改密**（seed `must_change_password=true`）
-7. ivy 超管：`/admin` 兩 Tab（業務與別名 / 帳號）
-8. 業務篩選（ivy 預設「自己」，可切全部/未歸屬）
-9. 別名對照表；未歸屬不計 KPI
-10. **徹底移除** clearAll（UI + 程式 + README）
-11. 倍率：全員可讀，僅 ivy 可寫；**rep 新增案件不寫倍率表**
-12. **訪客閘**、**RLS 同版 deploy**、**kpiRecords** — 見 spec v1.1 / 需求 §13
-
-實作順序見需求清單 §8。衝突釐清見 §11。機器 spec：[spec/spec-architecture-auth-multi-account-rls.md](../spec/spec-architecture-auth-multi-account-rls.md) v1.1。
-
-### 實作前 Kyson 需提供
-
-- ivy 超管 **真實 email**（Supabase Auth）
-- 一般帳號 Auth 網域 `{login}@???`
+**若採正式版：多帳號 + 業務隔離（方案 B）** — 見 spec §3.6 實作順序。
 
 ---
 
-## 7. UI/UX 債務（非登入阻塞）
+## 7. UI/UX
 
-見 [ui-ux-plan.md](./ui-ux-plan.md)：CalculatorView 瘦身、1440px 表格 RWD、規則頁文案等（2026-06-30 核心項已收斂）。
+見 [ui-ux-plan.md](./ui-ux-plan.md)（CalculatorView 瘦身、1440px RWD、規則頁文案、視覺特效 — 已完成）。
 
 ---
 
@@ -216,11 +187,4 @@ Supabase 需建立 Auth 使用者 **`gate@ivy.app`**（密碼由 Kyson 設定）
 
 ---
 
-## 9. 相關對話紀錄
-
-- Cursor agent transcript：`.cursor/projects/.../agent-transcripts/`
-- Claude Code：`~/.claude/projects/C--ivyishotgirl/*.jsonl`
-
----
-
-_最後更新：2026-06-29（§0 簡易閘現況；正式版 spec 仍待實作）_
+_最後更新：2026-06-30（個人版小修：session 過期、DB 重試、handoff 同步）_

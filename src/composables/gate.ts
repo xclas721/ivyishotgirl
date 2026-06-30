@@ -5,12 +5,16 @@
 // only and supplies this email behind the scenes.
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { resetLedger } from '@/composables/ledger'
 
 // Must match the Supabase Auth user created in the dashboard.
 export const GATE_EMAIL = 'gate@ivy.app'
 
 export const isUnlocked = ref(false)
 export const authReady = ref(false)
+export const sessionExpired = ref(false)
+
+let manualLock = false
 
 // Restore any persisted session, then keep the flag in sync with auth changes.
 void supabase.auth.getSession().then(({ data }) => {
@@ -18,8 +22,19 @@ void supabase.auth.getSession().then(({ data }) => {
   authReady.value = true
 })
 
-supabase.auth.onAuthStateChange((_event, session) => {
+supabase.auth.onAuthStateChange((event, session) => {
+  const hadSession = isUnlocked.value
   isUnlocked.value = !!session
+
+  if (session) {
+    sessionExpired.value = false
+    return
+  }
+
+  if (hadSession && !manualLock) {
+    resetLedger()
+    sessionExpired.value = true
+  }
 })
 
 // Returns true on success, false on wrong password. Throws on other errors.
@@ -66,6 +81,13 @@ export async function tryUnlock(password: string): Promise<boolean> {
 }
 
 export async function lock() {
-  await supabase.auth.signOut()
-  isUnlocked.value = false
+  manualLock = true
+  try {
+    await supabase.auth.signOut()
+    isUnlocked.value = false
+    sessionExpired.value = false
+    resetLedger()
+  } finally {
+    manualLock = false
+  }
 }

@@ -24,15 +24,9 @@ POST /api/fetch-quote
 
 `/api/fetch-quote` 只允許抓取 `quote.saiens.tw`，避免變成任意 proxy。
 
-## Playwright fallback
+## 抓取報價
 
-如果報價單內容是 JavaScript 動態渲染，可以安裝 Playwright 後啟動 fallback：
-
-```sh
-npm install playwright
-npx playwright install chromium
-npm run start:pw
-```
+後端以 **httpx** 抓取 `quote.saiens.tw` 的 HTML（同源 `/api/fetch-quote`）。若報價頁改為重度 JavaScript 動態渲染、現有抓取抓不到資料，需另加 Playwright fallback（**尚未實作**）。
 
 ## 計算規則
 
