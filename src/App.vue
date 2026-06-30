@@ -50,11 +50,12 @@ async function handleLogout() {
         <div class="sidebar-footer">
           <button type="button" class="sidebar-logout" @click="showChangePassword = true">
             <KeyRound class="sidebar-icon" :size="15" :stroke-width="1.8" />
-            修改密碼
+            <span class="sidebar-action-label sidebar-action-label--long">修改密碼</span>
+            <span class="sidebar-action-label sidebar-action-label--short">改密</span>
           </button>
           <button type="button" class="sidebar-logout" @click="handleLogout">
             <LogOut class="sidebar-icon" :size="15" :stroke-width="1.8" />
-            登出
+            <span class="sidebar-action-label">登出</span>
           </button>
         </div>
       </nav>

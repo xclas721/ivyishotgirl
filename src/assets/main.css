@@ -313,6 +313,10 @@
     display: none;
   }
 
+  .sidebar-action-label--short {
+    display: none;
+  }
+
   .sidebar-icon {
     flex-shrink: 0;
     opacity: 0.65;
@@ -573,7 +577,7 @@
     }
   }
 
-  /* ≤768px: sidebar → compact top bar (brand + actions / 3-col nav) */
+  /* ≤768px: sidebar → 三列 top bar（品牌 / 導覽 / 操作） */
   @media (max-width: 768px) {
     .site-layout {
       grid-template-columns: 1fr;
@@ -584,10 +588,11 @@
       position: static;
       height: auto;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: 1fr;
       grid-template-areas:
-        'brand actions'
-        'nav nav';
+        'brand'
+        'nav'
+        'actions';
       align-items: stretch;
       border-right: none;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -595,7 +600,7 @@
 
     .sidebar-header {
       grid-area: brand;
-      padding: 10px 14px;
+      padding: 10px 14px 8px;
       border-bottom: none;
       border-right: none;
       flex-shrink: 0;
@@ -621,7 +626,7 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 4px;
       margin: 0;
-      padding: 0 8px 10px;
+      padding: 0 8px 8px;
       overflow: visible;
       width: 100%;
     }
@@ -652,19 +657,31 @@
       grid-area: actions;
       margin-top: 0;
       margin-left: 0;
-      padding: 0 10px 0 0;
+      padding: 0 8px 10px;
       border-top: none;
       border-left: none;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      width: 100%;
     }
 
     .sidebar-logout {
-      width: auto;
+      justify-content: center;
+      width: 100%;
+      min-width: 0;
       white-space: nowrap;
-      padding: 8px 10px;
+      padding: 8px 6px;
       font-size: 12px;
+      gap: 5px;
+    }
+
+    .sidebar-action-label--long {
+      display: none;
+    }
+
+    .sidebar-action-label--short {
+      display: inline;
     }
 
     /* mobile: no fixed marble — iOS Safari compat */
