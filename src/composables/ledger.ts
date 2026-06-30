@@ -208,22 +208,6 @@ export const filterYears = computed(() => {
   return Array.from(years).sort((a, b) => b - a)
 })
 
-// Year blocks to render on the multipliers page given the year filter.
-export const displayedYears = computed(() => {
-  if (selectedYear.value === 'all') return multiplierYears.value
-  if (multiplierYears.value.includes(selectedYear.value)) {
-    return multiplierYears.value.filter((y) => y === selectedYear.value)
-  }
-  // Keep the selected year visible even before any records exist for it.
-  return [selectedYear.value]
-})
-
-// Quarters to render on the multipliers page given the quarter filter.
-const ALL_QUARTERS: Quarter[] = ['Q1', 'Q2', 'Q3', 'Q4']
-export const displayedQuarters = computed(() =>
-  selectedQuarter.value === 'all' ? ALL_QUARTERS : [selectedQuarter.value],
-)
-
 // True when a quarter key (e.g. "2026-Q2") matches the active year/quarter
 // filter — used to highlight the in-focus stat card.
 export function isFilteredQuarter(key: string): boolean {

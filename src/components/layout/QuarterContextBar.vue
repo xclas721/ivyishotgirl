@@ -9,7 +9,7 @@ import { useLedgerSections } from '@/composables/ledgerSections'
 const route = useRoute()
 const { visibleSections } = useLedgerSections()
 
-const showBar = computed(() => route.path === '/' || route.path === '/multipliers')
+const showBar = computed(() => route.path === '/')
 const showLedgerTabs = computed(() => route.path === '/')
 </script>
 
