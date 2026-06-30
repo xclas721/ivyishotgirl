@@ -343,3 +343,11 @@ export function removeRecord(id: string) {
   records.value = records.value.filter((record) => record.id !== id)
   persistToDb(() => db.deleteRecord(id))
 }
+
+export function resetLedger() {
+  loadPromise = null
+  records.value = []
+  quarterMultipliers.value = {}
+  dbError.value = ''
+  isLoading.value = true
+}

@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import { LayoutDashboard, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
+import { LayoutDashboard, LogOut, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
 import QuarterContextBar from '@/components/layout/QuarterContextBar.vue'
 import PasswordGate from '@/components/PasswordGate.vue'
-import { isUnlocked, authReady } from '@/composables/gate'
+import { isUnlocked, authReady, lock } from '@/composables/gate'
+import { resetLedger } from '@/composables/ledger'
+
+async function handleLogout() {
+  await lock()
+  resetLedger()
+}
 </script>
 
 <template>
@@ -36,6 +42,12 @@ import { isUnlocked, authReady } from '@/composables/gate'
             </RouterLink>
           </li>
         </ul>
+        <div class="sidebar-footer">
+          <button type="button" class="sidebar-logout" @click="handleLogout">
+            <LogOut class="sidebar-icon" :size="15" :stroke-width="1.8" />
+            登出
+          </button>
+        </div>
       </nav>
       <div class="site-main">
         <QuarterContextBar />
