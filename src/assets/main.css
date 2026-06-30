@@ -309,6 +309,14 @@
     background: rgba(168, 113, 46, 0.16);
   }
 
+  .sidebar-link-label--short {
+    display: none;
+  }
+
+  .sidebar-action-label--short {
+    display: none;
+  }
+
   .sidebar-icon {
     flex-shrink: 0;
     opacity: 0.65;
@@ -366,6 +374,7 @@
     background: transparent;
     display: flex;
     flex-direction: column;
+    overflow-x: clip;
   }
 
   /* Global quarter context — sticky under sidebar layout */
@@ -490,13 +499,14 @@
   @media (max-width: 768px) {
     .quarter-context-bar {
       position: static;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: 1fr;
       grid-template-areas:
-        'main filter'
-        'kpis kpis';
-      gap: 8px 10px;
+        'main'
+        'filter'
+        'kpis';
+      gap: 10px;
       width: min(var(--layout-content-max), calc(100% - 24px));
-      padding: 8px 12px;
+      padding: 10px 12px;
       margin-bottom: -4px;
     }
 
@@ -512,9 +522,10 @@
     }
 
     .quarter-filter {
-      justify-self: end;
-      flex-wrap: nowrap;
-      gap: 6px;
+      justify-self: stretch;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .quarter-filter .year-filter {
@@ -557,7 +568,8 @@
 
   @media (max-width: 620px) {
     .quarter-context-bar {
-      padding: 8px 10px;
+      width: min(var(--layout-content-max), calc(100% - 20px));
+      padding: 10px 12px;
     }
 
     .context-kpi-label {
@@ -565,7 +577,7 @@
     }
   }
 
-  /* ≤768px: sidebar → top bar */
+  /* ≤768px: sidebar → 三列 top bar（品牌 / 導覽 / 操作） */
   @media (max-width: 768px) {
     .site-layout {
       grid-template-columns: 1fr;
@@ -575,20 +587,33 @@
     .sidebar {
       position: static;
       height: auto;
-      flex-direction: row;
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'brand'
+        'nav'
+        'actions';
       align-items: stretch;
       border-right: none;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .sidebar-header {
-      padding: 10px 14px;
+      grid-area: brand;
+      padding: 10px 14px 8px;
       border-bottom: none;
-      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      border-right: none;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      min-width: 0;
+    }
+
+    .sidebar-brand {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .sidebar-sub {
@@ -596,37 +621,67 @@
     }
 
     .sidebar-nav {
-      display: flex;
-      flex-direction: row;
+      grid-area: nav;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 4px;
       margin: 0;
-      padding: 0 8px;
-      overflow-x: auto;
-      align-items: center;
+      padding: 0 8px 8px;
+      overflow: visible;
+      width: 100%;
     }
 
     .sidebar-nav li {
       margin: 0;
+      min-width: 0;
     }
 
     .sidebar-link {
-      padding: 8px 12px;
+      justify-content: center;
+      padding: 8px 6px;
+      font-size: 12px;
+      gap: 5px;
       white-space: nowrap;
+      min-width: 0;
+    }
+
+    .sidebar-link-label--long {
+      display: none;
+    }
+
+    .sidebar-link-label--short {
+      display: inline;
     }
 
     .sidebar-footer {
+      grid-area: actions;
       margin-top: 0;
-      margin-left: auto;
-      padding: 0 8px;
+      margin-left: 0;
+      padding: 0 8px 10px;
       border-top: none;
-      border-left: 1px solid rgba(255, 255, 255, 0.06);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
+      border-left: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      width: 100%;
     }
 
     .sidebar-logout {
-      width: auto;
+      justify-content: center;
+      width: 100%;
+      min-width: 0;
       white-space: nowrap;
+      padding: 8px 6px;
+      font-size: 12px;
+      gap: 5px;
+    }
+
+    .sidebar-action-label--long {
+      display: none;
+    }
+
+    .sidebar-action-label--short {
+      display: inline;
     }
 
     /* mobile: no fixed marble — iOS Safari compat */
@@ -738,31 +793,17 @@
 
   @media (max-width: 1080px) {
     .ledger-tabs {
-      display: flex;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      gap: 8px;
-      scroll-snap-type: x proximity;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      padding-bottom: 2px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ledger-tab {
-      flex: 0 0 auto;
-      min-width: 108px;
-      scroll-snap-align: start;
+    .ledger-tab-hint {
+      display: none;
     }
   }
 
   @media (max-width: 768px) {
     .ledger-tab {
-      min-width: 96px;
       padding: 9px 10px;
-    }
-
-    .ledger-tab-hint {
-      display: none;
     }
   }
 

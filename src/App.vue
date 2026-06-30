@@ -28,30 +28,34 @@ async function handleLogout() {
           <li>
             <RouterLink class="sidebar-link" to="/">
               <LayoutDashboard class="sidebar-icon" :size="15" :stroke-width="1.8" />
-              帳本計算機
+              <span class="sidebar-link-label sidebar-link-label--long">帳本計算機</span>
+              <span class="sidebar-link-label sidebar-link-label--short">帳本</span>
             </RouterLink>
           </li>
           <li>
             <RouterLink class="sidebar-link" to="/multipliers">
               <SlidersHorizontal class="sidebar-icon" :size="15" :stroke-width="1.8" />
-              季度倍率
+              <span class="sidebar-link-label sidebar-link-label--long">季度倍率</span>
+              <span class="sidebar-link-label sidebar-link-label--short">倍率</span>
             </RouterLink>
           </li>
           <li>
             <RouterLink class="sidebar-link" to="/rules">
               <ScrollText class="sidebar-icon" :size="15" :stroke-width="1.8" />
-              獎金規則
+              <span class="sidebar-link-label sidebar-link-label--long">獎金規則</span>
+              <span class="sidebar-link-label sidebar-link-label--short">規則</span>
             </RouterLink>
           </li>
         </ul>
         <div class="sidebar-footer">
           <button type="button" class="sidebar-logout" @click="showChangePassword = true">
             <KeyRound class="sidebar-icon" :size="15" :stroke-width="1.8" />
-            修改密碼
+            <span class="sidebar-action-label sidebar-action-label--long">修改密碼</span>
+            <span class="sidebar-action-label sidebar-action-label--short">改密</span>
           </button>
           <button type="button" class="sidebar-logout" @click="handleLogout">
             <LogOut class="sidebar-icon" :size="15" :stroke-width="1.8" />
-            登出
+            <span class="sidebar-action-label">登出</span>
           </button>
         </div>
       </nav>
