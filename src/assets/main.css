@@ -1449,8 +1449,7 @@
   }
 
   .records-table tr.is-highlighted td {
-    background: rgba(168, 113, 46, 0.14);
-    transition: background 0.3s ease;
+    animation: fx-row-spotlight 1.2s var(--fx-ease-out, ease) both;
   }
 
   .records-table tr.is-highlighted td.sticky-col,

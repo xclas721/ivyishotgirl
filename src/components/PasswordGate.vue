@@ -6,6 +6,17 @@ import { tryUnlock } from '@/composables/gate'
 const password = ref('')
 const error = ref('')
 const busy = ref(false)
+const shake = ref(false)
+
+function triggerShake() {
+  shake.value = false
+  requestAnimationFrame(() => {
+    shake.value = true
+    window.setTimeout(() => {
+      shake.value = false
+    }, 480)
+  })
+}
 
 async function submit() {
   if (busy.value || !password.value) return
@@ -16,9 +27,11 @@ async function submit() {
     if (!ok) {
       error.value = '密碼錯誤'
       password.value = ''
+      triggerShake()
     }
   } catch (err) {
     error.value = (err as Error).message || '驗證失敗，請稍後再試。'
+    triggerShake()
   } finally {
     busy.value = false
   }
@@ -27,7 +40,7 @@ async function submit() {
 
 <template>
   <main class="gate">
-    <form class="gate-card" @submit.prevent="submit">
+    <form class="gate-card" :class="{ 'fx-shake': shake }" @submit.prevent="submit">
       <span class="gate-icon">
         <Lock :size="20" :stroke-width="1.6" />
       </span>
@@ -42,10 +55,17 @@ async function submit() {
         autocomplete="current-password"
         :disabled="busy"
       />
-      <button class="gate-btn" type="submit" :disabled="busy || !password">
+      <button
+        class="gate-btn"
+        :class="{ 'fx-btn-loading': busy }"
+        type="submit"
+        :disabled="busy || !password"
+      >
         {{ busy ? '驗證中…' : '進入' }}
       </button>
-      <p v-if="error" class="gate-error">{{ error }}</p>
+      <Transition name="fx-status">
+        <p v-if="error" class="gate-error">{{ error }}</p>
+      </Transition>
     </form>
   </main>
 </template>
