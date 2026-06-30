@@ -111,11 +111,6 @@ export async function deleteRecord(id: string): Promise<void> {
   if (error) throw error
 }
 
-export async function clearAllRecords(): Promise<void> {
-  const { error } = await supabase.from('bonus_records').delete().neq('id', '')
-  if (error) throw error
-}
-
 // ---------- quarter_multipliers ----------
 
 export async function fetchMultipliers(): Promise<Record<string, QuarterMultiplier>> {
@@ -139,10 +134,5 @@ export async function upsertMultipliers(
   const rows = Object.entries(multipliers).map(([key, m]) => multiplierToRow(key, m))
   if (!rows.length) return
   const { error } = await supabase.from('quarter_multipliers').upsert(rows, { onConflict: 'key' })
-  if (error) throw error
-}
-
-export async function clearAllMultipliers(): Promise<void> {
-  const { error } = await supabase.from('quarter_multipliers').delete().neq('key', '')
   if (error) throw error
 }

@@ -47,15 +47,13 @@ npm run start:pw
 
 ## 資料操作
 
-前端保留：
-
-- 匯出 CSV
-- 清空紀錄
+- 匯出 CSV（依目前篩選範圍）
 
 ## 檢查
 
 ```sh
 npm run format:check
 npm run type-check
+npm run test
 npm run build
 ```

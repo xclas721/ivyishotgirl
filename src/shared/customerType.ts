@@ -5,10 +5,7 @@ export const CUSTOMER_TYPE_OPTIONS = [
   { value: 'biz', label: '商業合作', rate: 2 },
 ] as const
 
-export type CustomerType =
-  | (typeof CUSTOMER_TYPE_OPTIONS)[number]['value']
-  | 'unknown'
-  | 'company'
+export type CustomerType = (typeof CUSTOMER_TYPE_OPTIONS)[number]['value'] | 'unknown' | 'company'
 
 const RATE_BY_TYPE: Record<CustomerType, number> = {
   personal: 5,

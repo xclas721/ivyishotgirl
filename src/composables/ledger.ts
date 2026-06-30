@@ -343,10 +343,3 @@ export function removeRecord(id: string) {
   records.value = records.value.filter((record) => record.id !== id)
   persistToDb(() => db.deleteRecord(id))
 }
-
-export function clearAll() {
-  records.value = []
-  quarterMultipliers.value = {}
-  persistToDb(() => db.clearAllRecords())
-  persistToDb(() => db.clearAllMultipliers())
-}

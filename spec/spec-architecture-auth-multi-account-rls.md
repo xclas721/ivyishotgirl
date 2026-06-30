@@ -54,24 +54,24 @@ tags: [architecture, security, auth, supabase, vue, fastapi]
 
 ## 2. Definitions
 
-| Term | Definition |
-|------|------------|
-| **AM** | Account Manager；本系統使用者（業務或超管） |
-| **ivy** | 超級管理員帳號；`role=super`；登入帳號 `ivy` |
-| **rep** | 一般業務帳號；`role=rep` |
-| **登入帳號** | `user_profiles.login_username`；英文/數字；登入畫面輸入 |
-| **顯示名稱** | `user_profiles.display_name`；可中文；UI 展示用 |
-| **Auth email** | Supabase Auth 用 email；ivy 為真實 email，其他為 `{login_username}@{AUTH_EMAIL_DOMAIN}` |
-| **業務主檔** | `sales_reps` 一列；含 `display_name` |
-| **別名** | `sales_rep_aliases.alias`；與報價單 `bonus_records.sales_rep` 字串完全相等即歸屬 |
-| **未歸屬** | `trim(sales_rep) ≠ ''` 且無任何別名匹配；**空字串不算未歸屬**；僅 ivy 在「未歸屬」篩選可見；不計 KPI |
-| **已歸屬** | `sales_rep` 與某業務別名完全匹配；或 `sales_rep` 為空字串（不計未歸屬、不計入 rep 案件） |
-| **試算模式** | 未登入狀態；資料僅存於前端記憶體 |
-| **RLS** | PostgreSQL Row Level Security |
-| **service role** | Supabase service role key；僅後端使用 |
-| **JWT** | Supabase session access token；前端帶入 Supabase client |
-| **KPI** | 帳本脈絡列應計/實領統計（`QuarterContextBar` 等） |
-| **財務季度** | 2–4→Q1、5–7→Q2、8–10→Q3、11–12+隔年1月→Q4；1月歸前一年 Q4 |
+| Term             | Definition                                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------------------- |
+| **AM**           | Account Manager；本系統使用者（業務或超管）                                                          |
+| **ivy**          | 超級管理員帳號；`role=super`；登入帳號 `ivy`                                                         |
+| **rep**          | 一般業務帳號；`role=rep`                                                                             |
+| **登入帳號**     | `user_profiles.login_username`；英文/數字；登入畫面輸入                                              |
+| **顯示名稱**     | `user_profiles.display_name`；可中文；UI 展示用                                                      |
+| **Auth email**   | Supabase Auth 用 email；ivy 為真實 email，其他為 `{login_username}@{AUTH_EMAIL_DOMAIN}`              |
+| **業務主檔**     | `sales_reps` 一列；含 `display_name`                                                                 |
+| **別名**         | `sales_rep_aliases.alias`；與報價單 `bonus_records.sales_rep` 字串完全相等即歸屬                     |
+| **未歸屬**       | `trim(sales_rep) ≠ ''` 且無任何別名匹配；**空字串不算未歸屬**；僅 ivy 在「未歸屬」篩選可見；不計 KPI |
+| **已歸屬**       | `sales_rep` 與某業務別名完全匹配；或 `sales_rep` 為空字串（不計未歸屬、不計入 rep 案件）             |
+| **試算模式**     | 未登入狀態；資料僅存於前端記憶體                                                                     |
+| **RLS**          | PostgreSQL Row Level Security                                                                        |
+| **service role** | Supabase service role key；僅後端使用                                                                |
+| **JWT**          | Supabase session access token；前端帶入 Supabase client                                              |
+| **KPI**          | 帳本脈絡列應計/實領統計（`QuarterContextBar` 等）                                                    |
+| **財務季度**     | 2–4→Q1、5–7→Q2、8–10→Q3、11–12+隔年1月→Q4；1月歸前一年 Q4                                            |
 
 ---
 
@@ -169,14 +169,14 @@ tags: [architecture, security, auth, supabase, vue, fastapi]
 
 ### 3.7 Auth & Guest Ledger Behavior
 
-| 函式／行為 | 訪客（試算） | 已登入 |
-|------------|--------------|--------|
-| `ensureLoaded()` | **不呼叫**；`isLoading=false` | 呼叫；載入 DB |
-| `persistToDb(fn)` | **no-op** | 執行 fn |
-| `records` 初始 | `[]` 記憶體 | 來自 Supabase |
-| `quarterMultipliers` 初始 | 記憶體 `{}` + `defaultMultiplier()` | 來自 Supabase |
-| `upsertRecord` 內 `upsertMultiplier` | no-op（整段 persist 被擋） | **僅 super** 才 persist 倍率；rep 只寫 record |
-| `updateMultiplier` / `addYear` | UI disabled 或 no-op | rep：disabled；super：可寫 |
+| 函式／行為                           | 訪客（試算）                        | 已登入                                        |
+| ------------------------------------ | ----------------------------------- | --------------------------------------------- |
+| `ensureLoaded()`                     | **不呼叫**；`isLoading=false`       | 呼叫；載入 DB                                 |
+| `persistToDb(fn)`                    | **no-op**                           | 執行 fn                                       |
+| `records` 初始                       | `[]` 記憶體                         | 來自 Supabase                                 |
+| `quarterMultipliers` 初始            | 記憶體 `{}` + `defaultMultiplier()` | 來自 Supabase                                 |
+| `upsertRecord` 內 `upsertMultiplier` | no-op（整段 persist 被擋）          | **僅 super** 才 persist 倍率；rep 只寫 record |
+| `updateMultiplier` / `addYear`       | UI disabled 或 no-op                | rep：disabled；super：可寫                    |
 
 實作建議：新增 `src/composables/auth.ts`（或 `useAuth()`）提供 `isGuest`、`role`、`profile`；`ledger.ts` 的 `persistToDb` 開頭檢查 `isGuest`。
 
@@ -223,12 +223,12 @@ CREATE TABLE user_profiles (
 
 #### RLS Summary
 
-| Table | anon | rep | super |
-|-------|------|-----|-------|
-| `bonus_records` | none | CRUD where `sales_rep` matches own aliases；**`trim(sales_rep)=''` 僅 super 可寫** | all |
-| `quarter_multipliers` | none | SELECT | SELECT, INSERT, UPDATE, DELETE |
-| `sales_reps`, `sales_rep_aliases` | none | SELECT (read aliases for ownership) | all |
-| `user_profiles` | none | SELECT own row | all |
+| Table                             | anon | rep                                                                                | super                          |
+| --------------------------------- | ---- | ---------------------------------------------------------------------------------- | ------------------------------ |
+| `bonus_records`                   | none | CRUD where `sales_rep` matches own aliases；**`trim(sales_rep)=''` 僅 super 可寫** | all                            |
+| `quarter_multipliers`             | none | SELECT                                                                             | SELECT, INSERT, UPDATE, DELETE |
+| `sales_reps`, `sales_rep_aliases` | none | SELECT (read aliases for ownership)                                                | all                            |
+| `user_profiles`                   | none | SELECT own row                                                                     | all                            |
 
 Implementation MAY use `security definer` helper, e.g. `current_user_role()`, `record_belongs_to_current_rep(sales_rep text)`.
 
@@ -320,17 +320,17 @@ Invalidates session (client + server as applicable).
 
 All require valid JWT + `role=super`. Non-super → `403`.
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/api/admin/users` | 列出帳號（含綁定業務、active、must_change_password） |
-| POST | `/api/admin/users` | Create auth user + profile + bind sales_rep |
-| PATCH | `/api/admin/users/{userId}` | Deactivate, set must_change_password |
-| GET | `/api/admin/sales-reps` | 列出業務主檔 |
-| POST | `/api/admin/sales-reps` | Create sales rep |
-| PATCH | `/api/admin/sales-reps/{id}` | Update/deactivate |
-| GET | `/api/admin/sales-reps/{id}/aliases` | 列出該業務別名 |
-| POST | `/api/admin/sales-reps/{id}/aliases` | Add alias |
-| DELETE | `/api/admin/aliases/{id}` | Remove alias |
+| Method | Path                                 | Purpose                                              |
+| ------ | ------------------------------------ | ---------------------------------------------------- |
+| GET    | `/api/admin/users`                   | 列出帳號（含綁定業務、active、must_change_password） |
+| POST   | `/api/admin/users`                   | Create auth user + profile + bind sales_rep          |
+| PATCH  | `/api/admin/users/{userId}`          | Deactivate, set must_change_password                 |
+| GET    | `/api/admin/sales-reps`              | 列出業務主檔                                         |
+| POST   | `/api/admin/sales-reps`              | Create sales rep                                     |
+| PATCH  | `/api/admin/sales-reps/{id}`         | Update/deactivate                                    |
+| GET    | `/api/admin/sales-reps/{id}/aliases` | 列出該業務別名                                       |
+| POST   | `/api/admin/sales-reps/{id}/aliases` | Add alias                                            |
+| DELETE | `/api/admin/aliases/{id}`            | Remove alias                                         |
 
 Create user body example:
 
@@ -348,23 +348,23 @@ Backend SHALL set `auth_email = "{loginUsername}@{AUTH_EMAIL_DOMAIN}"` except iv
 
 ### 4.5 Frontend Routes
 
-| Path | Guest | rep | super |
-|------|-------|-----|-------|
-| `/login` | yes | redirect if logged in | same |
-| `/` | trial | yes | yes |
-| `/multipliers` | trial read-only | read | read/write |
-| `/rules` | yes | yes | yes |
-| `/admin` | no | no | yes |
+| Path           | Guest           | rep                   | super      |
+| -------------- | --------------- | --------------------- | ---------- |
+| `/login`       | yes             | redirect if logged in | same       |
+| `/`            | trial           | yes                   | yes        |
+| `/multipliers` | trial read-only | read                  | read/write |
+| `/rules`       | yes             | yes                   | yes        |
+| `/admin`       | no              | no                    | yes        |
 
 ### 4.6 Environment Variables
 
-| Variable | Where | Required |
-|----------|-------|----------|
-| `VITE_SUPABASE_URL` | frontend | yes |
-| `VITE_SUPABASE_ANON_KEY` | frontend | yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | backend only | yes (phase 2) |
-| `IVY_AUTH_EMAIL` | backend seed/config | yes at seed |
-| `AUTH_EMAIL_DOMAIN` | backend | yes at seed |
+| Variable                    | Where               | Required      |
+| --------------------------- | ------------------- | ------------- |
+| `VITE_SUPABASE_URL`         | frontend            | yes           |
+| `VITE_SUPABASE_ANON_KEY`    | frontend            | yes           |
+| `SUPABASE_SERVICE_ROLE_KEY` | backend only        | yes (phase 2) |
+| `IVY_AUTH_EMAIL`            | backend seed/config | yes at seed   |
+| `AUTH_EMAIL_DOMAIN`         | backend             | yes at seed   |
 
 ### 4.7 TypeScript — BonusRecord (existing)
 
@@ -388,13 +388,13 @@ See `src/lib/db.ts`: `salesRep: string` maps to `sales_rep`.
 
 ### 4.9 Local Development Environment
 
-| Variable | `.env.local` (frontend) | Vercel / API env |
-|----------|----------------------|------------------|
-| `VITE_SUPABASE_URL` | yes | — |
-| `VITE_SUPABASE_ANON_KEY` | yes | — |
-| `SUPABASE_SERVICE_ROLE_KEY` | optional for local API | **required** |
-| `IVY_AUTH_EMAIL` | — | seed 時 |
-| `AUTH_EMAIL_DOMAIN` | — | seed 時 |
+| Variable                    | `.env.local` (frontend) | Vercel / API env |
+| --------------------------- | ----------------------- | ---------------- |
+| `VITE_SUPABASE_URL`         | yes                     | —                |
+| `VITE_SUPABASE_ANON_KEY`    | yes                     | —                |
+| `SUPABASE_SERVICE_ROLE_KEY` | optional for local API  | **required**     |
+| `IVY_AUTH_EMAIL`            | —                       | seed 時          |
+| `AUTH_EMAIL_DOMAIN`         | —                       | seed 時          |
 
 ---
 

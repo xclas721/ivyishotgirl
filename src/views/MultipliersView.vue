@@ -47,9 +47,7 @@ function commitAddYear() {
     <header class="page-head page-head--compact">
       <div>
         <h1>季度倍率設定</h1>
-        <p>
-          同一個回簽季度的案子共用一組倍率，整季一份，不是每筆案子各自存。
-        </p>
+        <p>同一個回簽季度的案子共用一組倍率，整季一份，不是每筆案子各自存。</p>
       </div>
     </header>
 

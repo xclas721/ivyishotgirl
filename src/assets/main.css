@@ -1352,6 +1352,32 @@
     min-width: 1320px;
   }
 
+  @media (max-width: 1440px) {
+    .records-table table {
+      min-width: 1180px;
+    }
+
+    .records-table .sticky-col-1 {
+      min-width: 104px;
+    }
+
+    .records-table .sticky-col-2 {
+      left: 104px;
+      min-width: 108px;
+    }
+
+    .records-table .sticky-col-3 {
+      left: 212px;
+      min-width: 132px;
+    }
+
+    .records-table th,
+    .records-table td {
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+  }
+
   .records-table .colgroup-row th.colgroup-head {
     text-align: center;
     font-size: 9px;
