@@ -24,19 +24,22 @@ async function handleLogout() {
           <li>
             <RouterLink class="sidebar-link" to="/">
               <LayoutDashboard class="sidebar-icon" :size="15" :stroke-width="1.8" />
-              帳本計算機
+              <span class="sidebar-link-label sidebar-link-label--long">帳本計算機</span>
+              <span class="sidebar-link-label sidebar-link-label--short">帳本</span>
             </RouterLink>
           </li>
           <li>
             <RouterLink class="sidebar-link" to="/multipliers">
               <SlidersHorizontal class="sidebar-icon" :size="15" :stroke-width="1.8" />
-              季度倍率
+              <span class="sidebar-link-label sidebar-link-label--long">季度倍率</span>
+              <span class="sidebar-link-label sidebar-link-label--short">倍率</span>
             </RouterLink>
           </li>
           <li>
             <RouterLink class="sidebar-link" to="/rules">
               <ScrollText class="sidebar-icon" :size="15" :stroke-width="1.8" />
-              獎金規則
+              <span class="sidebar-link-label sidebar-link-label--long">獎金規則</span>
+              <span class="sidebar-link-label sidebar-link-label--short">規則</span>
             </RouterLink>
           </li>
         </ul>
