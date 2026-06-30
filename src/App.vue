@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
-import { LayoutDashboard, LogOut, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
+import { KeyRound, LayoutDashboard, LogOut, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
 import QuarterContextBar from '@/components/layout/QuarterContextBar.vue'
 import PasswordGate from '@/components/PasswordGate.vue'
+import ChangePasswordModal from '@/components/ChangePasswordModal.vue'
 import { isUnlocked, authReady, lock } from '@/composables/gate'
+
+const showChangePassword = ref(false)
 
 async function handleLogout() {
   await lock()
@@ -41,6 +45,10 @@ async function handleLogout() {
           </li>
         </ul>
         <div class="sidebar-footer">
+          <button type="button" class="sidebar-logout" @click="showChangePassword = true">
+            <KeyRound class="sidebar-icon" :size="15" :stroke-width="1.8" />
+            修改密碼
+          </button>
           <button type="button" class="sidebar-logout" @click="handleLogout">
             <LogOut class="sidebar-icon" :size="15" :stroke-width="1.8" />
             登出
@@ -55,6 +63,7 @@ async function handleLogout() {
           </Transition>
         </RouterView>
       </div>
+      <ChangePasswordModal v-model="showChangePassword" />
     </div>
   </Transition>
 </template>
