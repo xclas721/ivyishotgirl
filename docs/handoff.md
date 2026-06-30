@@ -19,7 +19,9 @@
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | 登入             | **單一共用帳號** — Supabase Auth `gate@ivy.app`，UI 只問密碼；經 **`POST /api/gate-login`** 代理（**10 次/分/IP** 限流） |
 | 登出             | 側欄「登出」→ `signOut` + 清空記憶體帳本                                                                                 |
+| 修改密碼         | 側欄「修改密碼」→ 驗證目前密碼後 `supabase.auth.updateUser`（`ChangePasswordModal.vue`）                                 |
 | Session 過期     | JWT 失效時自動回密碼閘，顯示「登入已過期」                                                                               |
+| 手機版導覽       | ≤768px 左上角 **☰** 滑出完整側欄（同桌面：導覽 + 改密 + 登出）；非頂部橫列                                               |
 | 未登入           | **硬閘** — 看不到帳本，無訪客試算                                                                                        |
 | RLS              | **已啟用** — `bonus_records`、`quarter_multipliers` 僅 `authenticated` 可讀寫（[`schema.sql`](../supabase/schema.sql)）  |
 | 多帳號／業務隔離 | **尚未實作**（spec §2–§5 待決）                                                                                          |
@@ -87,7 +89,9 @@ Kyson 慣例：**不要自動 build/test**，除非他明確要求。commit/push
 | 路徑                                          | 用途                                             |
 | --------------------------------------------- | ------------------------------------------------ |
 | `api/index.py`                                | 抓報價 HTML；`gate-login`；`extract_sales_rep()` |
-| `src/composables/gate.ts`                     | 密碼閘、session 同步、登出                       |
+| `src/composables/gate.ts`                     | 密碼閘、session 同步、登出、改密流程             |
+| `src/components/ChangePasswordModal.vue`      | 修改密碼 modal                                   |
+| `src/lib/passwordChange.ts`                   | 改密驗證邏輯                                     |
 | `src/composables/useQuoteWorkflow.ts`         | 抓取／同步／匯出流程                             |
 | `src/lib/db.ts`                               | `BonusRecord`、Supabase mapper                   |
 | `src/composables/ledger.ts`                   | 紀錄/倍率狀態、篩選、`ensureLoaded`              |
@@ -164,6 +168,9 @@ Supabase 需建立 Auth 使用者 **`gate@ivy.app`**（密碼由 Kyson 設定）
 - CI + Vitest + Python unittest
 - 視覺特效（`effects.css`）
 - 側欄登出、session 過期回閘、DB 錯誤重試
+- **修改密碼**（共用帳號過渡版）
+- **手機版**：左上角選單滑出側邊欄；修正閃爍與底部橫向捲軸
+- **新增報價單**客戶類型 select 與表格樣式統一（`type-select`）
 - README 與 Playwright 文件對齊（httpx 現況）
 
 ### 待做（見 [需求清單.md](./需求清單.md)）
@@ -174,7 +181,7 @@ Supabase 需建立 Auth 使用者 **`gate@ivy.app`**（密碼由 Kyson 設定）
 
 ## 7. UI/UX
 
-見 [ui-ux-plan.md](./ui-ux-plan.md)（CalculatorView 瘦身、1440px RWD、規則頁文案、視覺特效 — 已完成）。
+見 [ui-ux-plan.md](./ui-ux-plan.md)（1440px RWD、手機側欄 drawer、閃爍/捲軸修正、type-select 統一 — 已完成）。
 
 ---
 
@@ -187,4 +194,4 @@ Supabase 需建立 Auth 使用者 **`gate@ivy.app`**（密碼由 Kyson 設定）
 
 ---
 
-_最後更新：2026-06-30（個人版小修：session 過期、DB 重試、handoff 同步）_
+_最後更新：2026-06-30（改密、手機側欄 drawer、閃爍/捲軸修正、type-select 同步）_

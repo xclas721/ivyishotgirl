@@ -15,7 +15,7 @@ AM 季度獎金試算：貼 quote.saiens.tw URL 抓報價 → 依回簽季度算
 1. docs/handoff.md — 架構、現況、協作慣例
 2. docs/需求清單.md — 登入/多帳號/業務隔離規格（§1 已完成，§2–§5 待實作；§12 不必追求）
 3. spec/spec-architecture-auth-multi-account-rls.md — AI 可讀實作 spec（REQ/AC/API/RLS）
-4. docs/ui-ux-plan.md — UX 規劃（次要；Git 歷史已移除，本機若有可參考）
+4. docs/ui-ux-plan.md — UX 規劃（1440px RWD、手機側欄、視覺特效）
 
 ## 技術棧
 Vue 3 + TS + Tailwind v4 | FastAPI api/index.py | Supabase | Vercel
@@ -54,7 +54,8 @@ Vue 3 + TS + Tailwind v4 | FastAPI api/index.py | Supabase | Vercel
 
 ## 當前進度
 ✅ 案件業務 sales_rep 已上線
-✅ 簡易登入閘 + Supabase Auth + RLS（b22dcf6）
+✅ 簡易登入閘 + Supabase Auth + RLS
+✅ 修改密碼、手機側欄 drawer、閃爍/捲軸修正、type-select 統一（2026-06-30）
 ✅ 需求清單 / spec 已對齊正式版（§2–§5 待實作）
 ⏳ 若做正式版：需求清單 §8 第 2 步起 — 新表 + 業務隔離 RLS + seed ivy + 後端 API
 實作順序見 §8；衝突以 §11 為準；驗收見 §9。
