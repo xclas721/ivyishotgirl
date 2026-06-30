@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
-import { KeyRound, LayoutDashboard, LogOut, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
+import { LayoutDashboard, ScrollText, SlidersHorizontal } from 'lucide-vue-next'
 import QuarterContextBar from '@/components/layout/QuarterContextBar.vue'
+import SidebarAccountMenu from '@/components/layout/SidebarAccountMenu.vue'
 import PasswordGate from '@/components/PasswordGate.vue'
 import ChangePasswordModal from '@/components/ChangePasswordModal.vue'
 import { isUnlocked, authReady, lock } from '@/composables/gate'
@@ -44,16 +45,7 @@ async function handleLogout() {
             </RouterLink>
           </li>
         </ul>
-        <div class="sidebar-footer">
-          <button type="button" class="sidebar-logout" @click="showChangePassword = true">
-            <KeyRound class="sidebar-icon" :size="15" :stroke-width="1.8" />
-            修改密碼
-          </button>
-          <button type="button" class="sidebar-logout" @click="handleLogout">
-            <LogOut class="sidebar-icon" :size="15" :stroke-width="1.8" />
-            登出
-          </button>
-        </div>
+        <SidebarAccountMenu @change-password="showChangePassword = true" @logout="handleLogout" />
       </nav>
       <div class="site-main">
         <QuarterContextBar />
