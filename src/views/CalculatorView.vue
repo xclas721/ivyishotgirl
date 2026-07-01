@@ -20,6 +20,8 @@ const {
   isLoading,
   records,
   visibleRecords,
+  displayRecords,
+  recordSearchQuery,
   fetchQuotes,
   addQuoteDraftRow,
   removeQuoteDraftRow,
@@ -67,8 +69,10 @@ const {
       />
 
       <RecordsSection
-        :records="visibleRecords"
+        v-model:search-query="recordSearchQuery"
+        :records="displayRecords"
         :all-records-count="records.length"
+        :quarter-filtered-count="visibleRecords.length"
         :highlight-id="highlightedRecordId"
         :is-file-mode="isFileMode"
         :is-loading="isLoading"
