@@ -14,14 +14,20 @@ import {
 } from '@/composables/ledger'
 import { finalCommissionDisplay } from '@/composables/ledgerSummary'
 
-const props = defineProps<{
-  records: BonusRecord[]
-  highlightId?: string
-  isFileMode: boolean
-  isLoading: boolean
-  isSyncingAll: boolean
-  syncingIds: Set<string>
-}>()
+const props = withDefaults(
+  defineProps<{
+    records: BonusRecord[]
+    highlightId?: string
+    isFileMode: boolean
+    isLoading: boolean
+    isSyncingAll: boolean
+    syncingIds: Set<string>
+    showQuarterColumns?: boolean
+  }>(),
+  {
+    showQuarterColumns: false,
+  },
+)
 
 const emit = defineEmits<{
   resync: [record: BonusRecord]
@@ -52,19 +58,27 @@ function formatFinalCommission(record: BonusRecord) {
   return value === '無法計算' ? '無法計算' : money.format(value)
 }
 
+function quarterTitle(month: string) {
+  const key = getFiscalQuarter(month).key
+  return key ? `季度：${key}` : ''
+}
+
 function isSyncing(id: string) {
   return props.syncingIds.has(id)
 }
 </script>
 
 <template>
-  <div class="table-wrap records-table">
+  <div
+    class="table-wrap records-table"
+    :class="{ 'records-table--compact': !showQuarterColumns }"
+  >
     <table>
       <thead>
         <tr class="colgroup-row">
           <th colspan="4" class="colgroup-head">案件</th>
           <th colspan="2" class="colgroup-head">月份</th>
-          <th colspan="2" class="colgroup-head">季度</th>
+          <th v-if="showQuarterColumns" colspan="2" class="colgroup-head">季度</th>
           <th colspan="2" class="colgroup-head">金額</th>
           <th colspan="2" class="colgroup-head">獎金</th>
           <th rowspan="2" class="colgroup-head colgroup-actions">操作</th>
@@ -76,8 +90,8 @@ function isSyncing(id: string) {
           <th>業務</th>
           <th>回簽月份</th>
           <th>收款月份</th>
-          <th>回簽季度</th>
-          <th>發放季度</th>
+          <th v-if="showQuarterColumns">回簽季度</th>
+          <th v-if="showQuarterColumns">發放季度</th>
           <th>未連稅金額</th>
           <th>總計</th>
           <th>套用倍率</th>
@@ -106,27 +120,32 @@ function isSyncing(id: string) {
           </td>
           <td class="sticky-col sticky-col-2">{{ record.customerName || '-' }}</td>
           <td class="sticky-col sticky-col-3 type-cell">
-            <select
-              class="type-select"
-              :class="{ unknown: record.customerType === 'unknown' }"
-              :value="record.customerType"
-              @change="
-                updateRecord(record, 'customerType', ($event.target as HTMLSelectElement).value)
-              "
-            >
-              <option v-if="record.customerType === 'unknown'" value="unknown" disabled>
-                請選擇
-              </option>
-              <option
-                v-for="option in CUSTOMER_TYPE_OPTIONS"
-                :key="option.value"
-                :value="option.value"
+            <div class="type-cell-inner">
+              <select
+                class="type-select"
+                :class="{ unknown: record.customerType === 'unknown' }"
+                :value="record.customerType"
+                @change="
+                  updateRecord(record, 'customerType', ($event.target as HTMLSelectElement).value)
+                "
               >
-                {{ option.label }}（{{ option.rate }}%）
-              </option>
-            </select>
-            <div v-if="recordWarnings(record)" class="status error">
-              {{ recordWarnings(record) }}
+                <option v-if="record.customerType === 'unknown'" value="unknown" disabled>
+                  請選擇
+                </option>
+                <option
+                  v-for="option in CUSTOMER_TYPE_OPTIONS"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}（{{ option.rate }}%）
+                </option>
+              </select>
+              <span
+                v-if="recordWarnings(record)"
+                class="record-warning-dot"
+                :title="recordWarnings(record)"
+                aria-label="此列有待確認項目"
+              />
             </div>
           </td>
           <td class="rep-cell">
@@ -138,24 +157,26 @@ function isSyncing(id: string) {
               @change="updateRecord(record, 'salesRep', ($event.target as HTMLInputElement).value)"
             />
           </td>
-          <td>
+          <td :title="quarterTitle(record.signedMonth)">
             <input
               :value="record.signedMonth"
               type="month"
+              :title="quarterTitle(record.signedMonth)"
               @input="
                 updateRecord(record, 'signedMonth', ($event.target as HTMLInputElement).value)
               "
             />
           </td>
-          <td>
+          <td :title="quarterTitle(record.paidMonth)">
             <input
               :value="record.paidMonth"
               type="month"
+              :title="quarterTitle(record.paidMonth)"
               @input="updateRecord(record, 'paidMonth', ($event.target as HTMLInputElement).value)"
             />
           </td>
-          <td>{{ getFiscalQuarter(record.signedMonth).key || '-' }}</td>
-          <td>{{ getFiscalQuarter(record.paidMonth).key || '-' }}</td>
+          <td v-if="showQuarterColumns">{{ getFiscalQuarter(record.signedMonth).key || '-' }}</td>
+          <td v-if="showQuarterColumns">{{ getFiscalQuarter(record.paidMonth).key || '-' }}</td>
           <td class="money">
             <input
               :value="record.taxExcludedAmount"

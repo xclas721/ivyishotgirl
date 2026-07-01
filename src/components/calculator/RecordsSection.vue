@@ -1,7 +1,21 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
 import type { BonusRecord } from '@/lib/db'
 import RecordsTable from '@/components/ledger/RecordsTable.vue'
+
+const SHOW_QUARTER_COLUMNS_KEY = 'ivy-records-show-quarter-columns'
+
+function readShowQuarterColumns() {
+  if (typeof window === 'undefined') return false
+  return window.localStorage.getItem(SHOW_QUARTER_COLUMNS_KEY) === '1'
+}
+
+const showQuarterColumns = ref(readShowQuarterColumns())
+
+watch(showQuarterColumns, (value) => {
+  window.localStorage.setItem(SHOW_QUARTER_COLUMNS_KEY, value ? '1' : '0')
+})
 
 defineProps<{
   records: BonusRecord[]
@@ -26,6 +40,10 @@ const emit = defineEmits<{
     <div class="section-head">
       <h2>報價單紀錄</h2>
       <div v-if="records.length > 0" class="tool-row">
+        <label class="table-columns-toggle" title="回簽／發放季度可由月份推算，預設隱藏以縮窄表格">
+          <input v-model="showQuarterColumns" type="checkbox" />
+          顯示季度欄
+        </label>
         <button
           class="secondary"
           type="button"
@@ -61,6 +79,7 @@ const emit = defineEmits<{
       :is-loading="isLoading"
       :is-syncing-all="isSyncingAll"
       :syncing-ids="syncingIds"
+      :show-quarter-columns="showQuarterColumns"
       @resync="emit('resync', $event)"
       @delete="emit('delete', $event)"
     />
