@@ -1441,9 +1441,77 @@
     min-width: 1320px;
   }
 
+  .records-table.records-table--compact table {
+    min-width: 1080px;
+  }
+
+  .records-table.table-wrap {
+    position: relative;
+  }
+
+  .records-table.table-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    pointer-events: none;
+    background: linear-gradient(to left, rgba(233, 236, 239, 0.92), transparent);
+  }
+
+  .table-columns-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 0 10px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.55);
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .table-columns-toggle input {
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    accent-color: var(--color-copper);
+  }
+
+  .type-cell-inner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .type-cell-inner .type-select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .record-warning-dot {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-danger);
+    box-shadow: 0 0 0 2px rgba(165, 40, 40, 0.18);
+    cursor: help;
+  }
+
   @media (max-width: 1440px) {
     .records-table table {
       min-width: 1180px;
+    }
+
+    .records-table.records-table--compact table {
+      min-width: 960px;
     }
 
     .records-table .sticky-col-1 {
@@ -2155,6 +2223,11 @@
     .tool-row {
       width: 100%;
       flex-wrap: wrap;
+    }
+
+    .table-columns-toggle {
+      width: 100%;
+      justify-content: center;
     }
 
     .quarter-section-desc {
