@@ -6,8 +6,6 @@ defineProps<{
   recordCount: number
 }>()
 
-const emit = defineEmits<{ exportCsv: [] }>()
-
 const money = new Intl.NumberFormat('zh-TW', {
   style: 'currency',
   currency: 'TWD',
@@ -20,9 +18,6 @@ const integer = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 })
   <section class="panel">
     <div class="section-head">
       <h2>篩選範圍總覽</h2>
-      <div class="tool-row">
-        <button class="secondary" type="button" @click="emit('exportCsv')">匯出 CSV</button>
-      </div>
     </div>
     <div class="totals">
       <div class="total primary">
