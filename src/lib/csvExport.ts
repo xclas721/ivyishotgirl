@@ -1,8 +1,14 @@
 import { getFiscalQuarter, multipliersApply } from '@/shared/fiscalQuarter'
+import type { Quarter } from '@/shared/fiscalQuarter'
 import type { BonusRecord } from '@/lib/db'
 import { commissionRateFor, customerTypeLabel } from '@/shared/customerType'
 import { multiplierFor, multiplierSummary } from '@/composables/ledger'
 import { finalCommissionDisplay } from '@/composables/ledgerSummary'
+
+export interface CsvExportFilter {
+  selectedYear: number | 'all'
+  selectedQuarter: Quarter | 'all'
+}
 
 function csvCell(value: unknown) {
   return `"${String(value ?? '').replace(/"/g, '""')}"`
@@ -29,7 +35,39 @@ function downloadFile(filename: string, content: string, type: string) {
   URL.revokeObjectURL(url)
 }
 
-export function exportVisibleRecordsCsv(source: BonusRecord[]) {
+function pad2(value: number) {
+  return String(value).padStart(2, '0')
+}
+
+export function csvExportQuarterSlug(filter: CsvExportFilter): string {
+  const { selectedYear, selectedQuarter } = filter
+  if (selectedYear === 'all' && selectedQuarter === 'all') return 'all'
+  if (selectedYear === 'all') return `all-${selectedQuarter}`
+  if (selectedQuarter === 'all') return `${selectedYear}-all`
+  return `${selectedYear}-${selectedQuarter}`
+}
+
+export function csvExportTimestamp(exportedAt: Date = new Date()): string {
+  const year = exportedAt.getFullYear()
+  const month = pad2(exportedAt.getMonth() + 1)
+  const day = pad2(exportedAt.getDate())
+  const hour = pad2(exportedAt.getHours())
+  const minute = pad2(exportedAt.getMinutes())
+  return `${year}${month}${day}-${hour}${minute}`
+}
+
+export function buildCsvExportFilename(
+  filter: CsvExportFilter,
+  exportedAt: Date = new Date(),
+): string {
+  return `ivy-bonus-${csvExportQuarterSlug(filter)}-${csvExportTimestamp(exportedAt)}.csv`
+}
+
+export function exportVisibleRecordsCsv(
+  source: BonusRecord[],
+  filter: CsvExportFilter,
+  exportedAt: Date = new Date(),
+) {
   const headers = [
     '報價單網址',
     '案件編號',
@@ -76,5 +114,5 @@ export function exportVisibleRecordsCsv(source: BonusRecord[]) {
       ]
     })
   const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')
-  downloadFile('ivy-bonus-records.csv', `﻿${csv}`, 'text/csv;charset=utf-8')
+  downloadFile(buildCsvExportFilename(filter, exportedAt), `﻿${csv}`, 'text/csv;charset=utf-8')
 }

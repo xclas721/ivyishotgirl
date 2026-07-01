@@ -18,6 +18,8 @@ import {
   isLoading,
   records,
   removeRecord,
+  selectedQuarter,
+  selectedYear,
   upsertRecord,
   visibleRecords,
 } from '@/composables/ledger'
@@ -269,7 +271,10 @@ export function useQuoteWorkflow() {
       showStatus('這個篩選範圍沒有資料可以匯出。', 'error')
       return
     }
-    exportVisibleRecordsCsv(visibleRecords.value)
+    exportVisibleRecordsCsv(visibleRecords.value, {
+      selectedYear: selectedYear.value,
+      selectedQuarter: selectedQuarter.value,
+    })
   }
 
   function showStatus(message: string, tone = '') {
