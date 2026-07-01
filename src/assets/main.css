@@ -1630,12 +1630,11 @@
     background: rgba(168, 113, 46, 0.18);
   }
 
-  .records-cards-mobile {
+  .records-cards-mobile.records-card-list {
     display: none;
   }
 
   .records-card-list {
-    display: grid;
     gap: 16px;
   }
 
@@ -2557,7 +2556,7 @@
       font-size: 13px;
     }
 
-    .records-cards-mobile {
+    .records-cards-mobile.records-card-list {
       display: grid;
     }
 
