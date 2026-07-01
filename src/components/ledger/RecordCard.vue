@@ -117,51 +117,55 @@ const signedQuarterKey = (record: BonusRecord) => getFiscalQuarter(record.signed
         />
       </label>
 
-      <label class="record-card-field">
-        回簽月份
-        <input
-          :value="record.signedMonth"
-          type="month"
-          @input="updateRecord(record, 'signedMonth', ($event.target as HTMLInputElement).value)"
-        />
-        <span class="record-card-meta">季度 {{ quarterLabel(record.signedMonth) }}</span>
-      </label>
+      <div class="record-card-months">
+        <label class="record-card-field">
+          回簽月份
+          <input
+            :value="record.signedMonth"
+            type="month"
+            @input="updateRecord(record, 'signedMonth', ($event.target as HTMLInputElement).value)"
+          />
+          <span class="record-card-meta">季度 {{ quarterLabel(record.signedMonth) }}</span>
+        </label>
 
-      <label class="record-card-field">
-        收款月份
-        <input
-          :value="record.paidMonth"
-          type="month"
-          @input="updateRecord(record, 'paidMonth', ($event.target as HTMLInputElement).value)"
-        />
-        <span class="record-card-meta">季度 {{ quarterLabel(record.paidMonth) }}</span>
-      </label>
+        <label class="record-card-field">
+          收款月份
+          <input
+            :value="record.paidMonth"
+            type="month"
+            @input="updateRecord(record, 'paidMonth', ($event.target as HTMLInputElement).value)"
+          />
+          <span class="record-card-meta">季度 {{ quarterLabel(record.paidMonth) }}</span>
+        </label>
+      </div>
 
-      <label class="record-card-field">
-        未連稅金額
-        <input
-          :value="record.taxExcludedAmount"
-          type="number"
-          min="0"
-          step="1"
-          @input="
-            updateRecord(record, 'taxExcludedAmount', ($event.target as HTMLInputElement).value)
-          "
-        />
-      </label>
+      <div class="record-card-amounts">
+        <label class="record-card-field">
+          未連稅金額
+          <input
+            :value="record.taxExcludedAmount"
+            type="number"
+            min="0"
+            step="1"
+            @input="
+              updateRecord(record, 'taxExcludedAmount', ($event.target as HTMLInputElement).value)
+            "
+          />
+        </label>
 
-      <label class="record-card-field">
-        總計
-        <input
-          :value="record.taxIncludedAmount"
-          type="number"
-          min="0"
-          step="1"
-          @input="
-            updateRecord(record, 'taxIncludedAmount', ($event.target as HTMLInputElement).value)
-          "
-        />
-      </label>
+        <label class="record-card-field">
+          總計
+          <input
+            :value="record.taxIncludedAmount"
+            type="number"
+            min="0"
+            step="1"
+            @input="
+              updateRecord(record, 'taxIncludedAmount', ($event.target as HTMLInputElement).value)
+            "
+          />
+        </label>
+      </div>
     </div>
 
     <footer class="record-card-foot">
