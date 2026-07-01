@@ -50,7 +50,6 @@ const {
       v-if="isSectionVisible('overview')"
       :summary="ledgerSummary"
       :record-count="visibleRecords.length"
-      @export-csv="exportCsv"
     />
 
     <template v-if="isSectionVisible('records')">
@@ -75,6 +74,7 @@ const {
         :is-loading="isLoading"
         :is-syncing-all="isSyncingAll"
         :syncing-ids="syncingIds"
+        @export-csv="exportCsv"
         @resync-all="resyncAllVisible"
         @resync="resyncRecord"
         @delete="deleteRecord"

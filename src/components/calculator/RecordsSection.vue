@@ -14,6 +14,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
+  exportCsv: []
   resyncAll: []
   resync: [record: BonusRecord]
   delete: [id: string]
@@ -25,6 +26,15 @@ const emit = defineEmits<{
     <div class="section-head">
       <h2>報價單紀錄</h2>
       <div v-if="records.length > 0" class="tool-row">
+        <button
+          class="secondary"
+          type="button"
+          title="匯出目前篩選範圍的案件明細"
+          :disabled="isLoading"
+          @click="emit('exportCsv')"
+        >
+          匯出 CSV（{{ records.length }} 筆）
+        </button>
         <button
           class="secondary"
           type="button"
