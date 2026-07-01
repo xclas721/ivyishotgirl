@@ -1530,6 +1530,302 @@
     background: rgba(168, 113, 46, 0.18);
   }
 
+  .records-cards-mobile {
+    display: none;
+  }
+
+  .records-card-list {
+    display: grid;
+    gap: 16px;
+  }
+
+  /* 手機卡片清單：實心底 + 外陰影，與 panel 毛玻璃底區隔 */
+  .records-cards-mobile .record-card {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.08),
+      0 8px 24px rgba(0, 0, 0, 0.09);
+  }
+
+  .records-cards-mobile .record-card--highlighted {
+    background: #fffdf9;
+    border-color: rgba(168, 113, 46, 0.5);
+    box-shadow:
+      0 1px 3px rgba(168, 113, 46, 0.12),
+      0 8px 24px rgba(0, 0, 0, 0.09),
+      inset 0 0 0 1px rgba(168, 113, 46, 0.14);
+  }
+
+  .record-card {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      0 10px 28px rgba(0, 0, 0, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+
+  .record-card--highlighted {
+    border-color: rgba(168, 113, 46, 0.45);
+    background: rgba(255, 252, 248, 0.94);
+    box-shadow:
+      0 2px 8px rgba(168, 113, 46, 0.1),
+      0 10px 28px rgba(0, 0, 0, 0.07),
+      inset 0 0 0 1px rgba(168, 113, 46, 0.12);
+    animation: fx-row-spotlight 1.2s var(--fx-ease-out, ease) both;
+  }
+
+  .record-card-head {
+    display: grid;
+    gap: 10px;
+  }
+
+  .record-card-identity {
+    min-width: 0;
+  }
+
+  .record-card-order {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--color-copper);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+  }
+
+  .record-card-order:hover {
+    text-decoration: underline;
+  }
+
+  .record-card-customer {
+    margin: 4px 0 0;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+    overflow-wrap: anywhere;
+  }
+
+  .record-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .record-card-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 10px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.55);
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .record-card-action:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.82);
+    color: var(--color-copper);
+    transform: none;
+  }
+
+  .record-card-action--danger:hover:not(:disabled) {
+    color: var(--color-danger);
+    background: rgba(165, 40, 40, 0.06);
+  }
+
+  .record-card-action:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .record-card-action .spinning {
+    animation: table-action-spin 0.8s linear infinite;
+  }
+
+  .record-card-warning {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--color-danger-bg);
+    border: 1px solid rgba(165, 40, 40, 0.14);
+    color: var(--color-danger);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .record-card-body {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .record-card-months,
+  .record-card-amounts {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
+
+  .record-card-input-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: clip;
+    contain: inline-size;
+    border-radius: 8px;
+  }
+
+  .record-card-field {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .record-card-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .record-card-field input,
+  .record-card-field select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+  }
+
+  .record-card-field input[type='month'] {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 7px 34px 7px 11px;
+    text-align: start;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .record-card-field input[type='month']::-webkit-datetime-edit,
+  .record-card-field input[type='month']::-webkit-datetime-edit-fields-wrapper {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
+  }
+
+  .record-card-field input[type='month']::-webkit-datetime-edit-year-field,
+  .record-card-field input[type='month']::-webkit-datetime-edit-month-field,
+  .record-card-field input[type='month']::-webkit-datetime-edit-text {
+    min-width: 0;
+    padding: 0;
+  }
+
+  .record-card-input-wrap input[type='month']::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    transform: translateY(-50%);
+    opacity: 0.55;
+    cursor: pointer;
+  }
+
+  .record-card-meta {
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--color-muted);
+  }
+
+  .record-card-foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .record-card-stat {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+  }
+
+  .record-card-stat--bonus {
+    background: rgba(168, 113, 46, 0.1);
+    border-color: rgba(168, 113, 46, 0.22);
+  }
+
+  .record-card-stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .record-card-stat-value {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+
+  .record-card-stat-value--muted {
+    color: var(--color-muted);
+    font-weight: 500;
+  }
+
+  .record-card-bonus {
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-copper);
+  }
+
   .table-actions {
     display: inline-flex;
     flex-direction: column;
@@ -2159,6 +2455,14 @@
 
     .quarter-section-desc {
       font-size: 13px;
+    }
+
+    .records-cards-mobile {
+      display: grid;
+    }
+
+    .records-table--desktop {
+      display: none !important;
     }
   }
 

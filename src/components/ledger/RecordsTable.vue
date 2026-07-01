@@ -12,7 +12,7 @@ import {
   multiplierSummary,
   updateRecord,
 } from '@/composables/ledger'
-import { finalCommissionDisplay } from '@/composables/ledgerSummary'
+import { formatFinalCommission, recordWarnings } from '@/composables/useRecordDisplay'
 
 const props = defineProps<{
   records: BonusRecord[]
@@ -29,28 +29,9 @@ const emit = defineEmits<{
   resyncAll: []
 }>()
 
-const money = new Intl.NumberFormat('zh-TW', {
-  style: 'currency',
-  currency: 'TWD',
-  maximumFractionDigits: 0,
-})
-
 const sortedRecords = computed(() =>
   [...props.records].sort((a, b) => (b.paidMonth || '').localeCompare(a.paidMonth || '')),
 )
-
-function recordWarnings(record: BonusRecord) {
-  const warnings = []
-  if (!record.signedMonth) warnings.push('未抓到回簽月份，請手動選擇')
-  if (record.customerType === 'unknown') warnings.push('請選擇客戶類型')
-  if (record.amountInferred) warnings.push('金額為系統反推，請確認')
-  return warnings.join('；')
-}
-
-function formatFinalCommission(record: BonusRecord) {
-  const value = finalCommissionDisplay(record)
-  return value === '無法計算' ? '無法計算' : money.format(value)
-}
 
 function isSyncing(id: string) {
   return props.syncingIds.has(id)
@@ -58,7 +39,7 @@ function isSyncing(id: string) {
 </script>
 
 <template>
-  <div class="table-wrap records-table">
+  <div class="table-wrap records-table records-table--desktop">
     <table>
       <thead>
         <tr class="colgroup-row">

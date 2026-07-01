@@ -2,6 +2,7 @@
 import { MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
 import type { BonusRecord } from '@/lib/db'
 import RecordsTable from '@/components/ledger/RecordsTable.vue'
+import RecordsCardList from '@/components/ledger/RecordsCardList.vue'
 
 defineProps<{
   records: BonusRecord[]
@@ -53,17 +54,28 @@ const emit = defineEmits<{
           : '這個篩選範圍下沒有紀錄。換上面的工作季度，或選「全部」看看。'
       }}
     </div>
-    <RecordsTable
-      v-else
-      :records="records"
-      :highlight-id="highlightId"
-      :is-file-mode="isFileMode"
-      :is-loading="isLoading"
-      :is-syncing-all="isSyncingAll"
-      :syncing-ids="syncingIds"
-      @resync="emit('resync', $event)"
-      @delete="emit('delete', $event)"
-    />
+    <template v-else>
+      <RecordsCardList
+        class="records-cards-mobile"
+        :records="records"
+        :highlight-id="highlightId"
+        :is-file-mode="isFileMode"
+        :is-syncing-all="isSyncingAll"
+        :syncing-ids="syncingIds"
+        @resync="emit('resync', $event)"
+        @delete="emit('delete', $event)"
+      />
+      <RecordsTable
+        :records="records"
+        :highlight-id="highlightId"
+        :is-file-mode="isFileMode"
+        :is-loading="isLoading"
+        :is-syncing-all="isSyncingAll"
+        :syncing-ids="syncingIds"
+        @resync="emit('resync', $event)"
+        @delete="emit('delete', $event)"
+      />
+    </template>
     <div class="notice">
       <ul class="notice-list">
         <li>1 月算前一年度的 Q4。</li>
