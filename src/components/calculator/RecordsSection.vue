@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, X } from 'lucide-vue-next'
+import { CircleAlert, Search, X } from 'lucide-vue-next'
 import { MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
 import type { BonusRecord } from '@/lib/db'
 import RecordsTable from '@/components/ledger/RecordsTable.vue'
@@ -123,12 +123,13 @@ function showSearch() {
         @delete="emit('delete', $event)"
       />
     </template>
-    <div class="notice">
-      <ul class="notice-list">
+    <aside class="panel-tip" role="note" aria-label="使用提醒">
+      <CircleAlert class="panel-tip-icon" :size="18" :stroke-width="2" aria-hidden="true" />
+      <ul class="panel-tip-list">
         <li>1 月算前一年度的 Q4。</li>
         <li>同一個網址重複新增，會更新原本那筆。</li>
         <li>倍率和最終獎金從 {{ MULTIPLIER_START_KEY }} 才開始算，更早的季度算不出來。</li>
       </ul>
-    </div>
+    </aside>
   </section>
 </template>
