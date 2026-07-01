@@ -33,7 +33,7 @@ function emptyMessage(): string {
     return '這個篩選範圍下沒有紀錄。換上面的工作季度，或選「全部」看看。'
   }
   if (searchQuery.value.trim()) {
-    return `找不到符合「${searchQuery.value.trim()}」的紀錄。試試案件編號、客戶名稱或業務。`
+    return `找不到符合「${searchQuery.value.trim()}」的紀錄。試試案件編號、客戶名稱或季度。`
   }
   return '這個篩選範圍下沒有紀錄。'
 }
@@ -81,7 +81,7 @@ function showSearch() {
           type="search"
           enterkeyhint="search"
           autocomplete="off"
-          placeholder="搜尋案件編號、客戶、業務…"
+          placeholder="搜尋案件編號、客戶、季度…"
         />
         <button
           v-if="searchQuery"
