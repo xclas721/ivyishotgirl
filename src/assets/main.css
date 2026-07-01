@@ -1560,6 +1560,7 @@
   .record-card {
     display: grid;
     gap: 14px;
+    min-width: 0;
     padding: 16px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 14px;
@@ -1671,6 +1672,7 @@
   .record-card-body {
     display: grid;
     gap: 12px;
+    min-width: 0;
   }
 
   .record-card-months,
@@ -1679,6 +1681,15 @@
     gap: 10px;
     grid-template-columns: 1fr;
     min-width: 0;
+    overflow: hidden;
+  }
+
+  .record-card-input-wrap {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .record-card-field {
@@ -1710,7 +1721,29 @@
 
   .record-card-field input[type='month'] {
     display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
+    padding-inline: 8px;
+  }
+
+  .record-card-field input[type='month']::-webkit-datetime-edit,
+  .record-card-field input[type='month']::-webkit-datetime-edit-fields-wrapper {
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .record-card-field input[type='month']::-webkit-datetime-edit-year-field,
+  .record-card-field input[type='month']::-webkit-datetime-edit-month-field {
+    min-width: 0;
+    padding: 0;
+  }
+
+  .record-card-field input[type='month']::-webkit-calendar-picker-indicator {
+    flex-shrink: 0;
+    margin-inline-start: auto;
   }
 
   .record-card-field .rep-input {

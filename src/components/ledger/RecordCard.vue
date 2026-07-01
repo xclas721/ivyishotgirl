@@ -120,21 +120,25 @@ const signedQuarterKey = (record: BonusRecord) => getFiscalQuarter(record.signed
       <div class="record-card-months">
         <label class="record-card-field">
           回簽月份
-          <input
-            :value="record.signedMonth"
-            type="month"
-            @input="updateRecord(record, 'signedMonth', ($event.target as HTMLInputElement).value)"
-          />
+          <span class="record-card-input-wrap">
+            <input
+              :value="record.signedMonth"
+              type="month"
+              @input="updateRecord(record, 'signedMonth', ($event.target as HTMLInputElement).value)"
+            />
+          </span>
           <span class="record-card-meta">季度 {{ quarterLabel(record.signedMonth) }}</span>
         </label>
 
         <label class="record-card-field">
           收款月份
-          <input
-            :value="record.paidMonth"
-            type="month"
-            @input="updateRecord(record, 'paidMonth', ($event.target as HTMLInputElement).value)"
-          />
+          <span class="record-card-input-wrap">
+            <input
+              :value="record.paidMonth"
+              type="month"
+              @input="updateRecord(record, 'paidMonth', ($event.target as HTMLInputElement).value)"
+            />
+          </span>
           <span class="record-card-meta">季度 {{ quarterLabel(record.paidMonth) }}</span>
         </label>
       </div>
