@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import type { LedgerTabId } from '@/components/ledger/LedgerTabs.vue'
 
-const visibleSections = ref<LedgerTabId[]>(['records'])
+const visibleSections = ref<LedgerTabId[]>(['overview', 'records'])
 
 export function useLedgerSections() {
   function isSectionVisible(id: LedgerTabId) {

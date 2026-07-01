@@ -48,12 +48,6 @@ const {
       <span v-if="apiOk" class="badge ok fx-badge-enter">API 已連線</span>
     </header>
 
-    <LedgerOverviewPanel
-      v-if="isSectionVisible('overview')"
-      :summary="ledgerSummary"
-      :record-count="visibleRecords.length"
-    />
-
     <template v-if="isSectionVisible('records')">
       <QuoteAddForm
         :quote-drafts="quoteDrafts"
@@ -66,6 +60,12 @@ const {
         @fetch="fetchQuotes"
         @add-row="addQuoteDraftRow"
         @remove-row="removeQuoteDraftRow"
+      />
+
+      <LedgerOverviewPanel
+        v-if="isSectionVisible('overview')"
+        :summary="ledgerSummary"
+        :record-count="visibleRecords.length"
       />
 
       <RecordsSection
