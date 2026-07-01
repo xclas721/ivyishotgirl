@@ -1,4 +1,5 @@
-import { nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { filterRecordsBySearch } from '@/composables/useRecordSearch'
 import type { BonusRecord, CustomerType } from '@/lib/db'
 import { defaultCustomerType } from '@/shared/customerType'
 import { exportVisibleRecordsCsv } from '@/lib/csvExport'
@@ -44,6 +45,11 @@ export function useQuoteWorkflow() {
   const apiOk = ref(false)
   const syncingIds = ref<Set<string>>(new Set())
   const highlightedRecordId = ref('')
+  const recordSearchQuery = ref('')
+
+  const displayRecords = computed(() =>
+    filterRecordsBySearch(visibleRecords.value, recordSearchQuery.value),
+  )
 
   onMounted(async () => {
     if (isFileMode) {
@@ -166,6 +172,7 @@ export function useQuoteWorkflow() {
   }
 
   async function revealRecord(recordId: string, signedMonth: string) {
+    recordSearchQuery.value = ''
     applyFilterForSignedMonth(signedMonth)
     ensureSectionVisible('records')
     highlightedRecordId.value = recordId
@@ -226,7 +233,7 @@ export function useQuoteWorkflow() {
       return
     }
 
-    const targets = visibleRecords.value.filter((record) => record.quoteUrl?.trim())
+    const targets = displayRecords.value.filter((record) => record.quoteUrl?.trim())
     if (targets.length === 0) return showStatus('目前沒有可同步的紀錄。', 'error')
     if (isSyncingAll.value) return
 
@@ -267,11 +274,11 @@ export function useQuoteWorkflow() {
   }
 
   function exportCsv() {
-    if (visibleRecords.value.length === 0) {
+    if (displayRecords.value.length === 0) {
       showStatus('這個篩選範圍沒有資料可以匯出。', 'error')
       return
     }
-    exportVisibleRecordsCsv(visibleRecords.value, {
+    exportVisibleRecordsCsv(displayRecords.value, {
       selectedYear: selectedYear.value,
       selectedQuarter: selectedQuarter.value,
     })
@@ -294,6 +301,8 @@ export function useQuoteWorkflow() {
     isLoading,
     records,
     visibleRecords,
+    displayRecords,
+    recordSearchQuery,
     fetchQuotes,
     addQuoteDraftRow,
     removeQuoteDraftRow,
