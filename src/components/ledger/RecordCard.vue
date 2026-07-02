@@ -16,10 +16,12 @@ import {
   quarterLabel,
   recordWarnings,
 } from '@/composables/useRecordDisplay'
+import SearchHighlight from '@/components/ui/SearchHighlight.vue'
 
 defineProps<{
   id?: string
   record: BonusRecord
+  searchQuery?: string
   highlighted: boolean
   isFileMode: boolean
   isSyncing: boolean
@@ -50,11 +52,15 @@ const signedQuarterKey = (record: BonusRecord) => getFiscalQuarter(record.signed
           rel="noreferrer"
           :title="record.quoteUrl"
         >
-          {{ record.orderNo || '報價單' }}
+          <SearchHighlight :text="record.orderNo || '報價單'" :query="searchQuery ?? ''" />
           <ExternalLink :size="13" :stroke-width="2" aria-hidden="true" />
         </a>
-        <span v-else class="record-card-order">{{ record.orderNo || '—' }}</span>
-        <p class="record-card-customer">{{ record.customerName || '—' }}</p>
+        <span v-else class="record-card-order">
+          <SearchHighlight :text="record.orderNo || '—'" :query="searchQuery ?? ''" />
+        </span>
+        <p class="record-card-customer">
+          <SearchHighlight :text="record.customerName || '—'" :query="searchQuery ?? ''" />
+        </p>
       </div>
       <div class="record-card-actions">
         <button

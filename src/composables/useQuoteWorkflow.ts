@@ -281,6 +281,7 @@ export function useQuoteWorkflow() {
     exportVisibleRecordsCsv(displayRecords.value, {
       selectedYear: selectedYear.value,
       selectedQuarter: selectedQuarter.value,
+      searchQuery: recordSearchQuery.value,
     })
   }
 

@@ -4,7 +4,7 @@
 // (not secret); only the password matters. The login UI asks for the password
 // only and supplies this email behind the scenes.
 import { ref } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseConfigured } from '@/lib/supabase'
 import { resetLedger } from '@/composables/ledger'
 
 // Must match the Supabase Auth user created in the dashboard.
@@ -17,10 +17,21 @@ export const sessionExpired = ref(false)
 let manualLock = false
 
 // Restore any persisted session, then keep the flag in sync with auth changes.
-void supabase.auth.getSession().then(({ data }) => {
-  isUnlocked.value = !!data.session
+const hasSupabaseConfig = supabaseConfigured
+
+if (!hasSupabaseConfig) {
   authReady.value = true
-})
+} else {
+  void supabase.auth
+    .getSession()
+    .then(({ data }) => {
+      isUnlocked.value = !!data.session
+      authReady.value = true
+    })
+    .catch(() => {
+      authReady.value = true
+    })
+}
 
 supabase.auth.onAuthStateChange((event, session) => {
   const hadSession = isUnlocked.value

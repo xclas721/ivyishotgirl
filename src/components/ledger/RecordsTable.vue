@@ -13,9 +13,11 @@ import {
   updateRecord,
 } from '@/composables/ledger'
 import { formatFinalCommission, recordWarnings } from '@/composables/useRecordDisplay'
+import SearchHighlight from '@/components/ui/SearchHighlight.vue'
 
 const props = defineProps<{
   records: BonusRecord[]
+  searchQuery?: string
   highlightId?: string
   isFileMode: boolean
   isLoading: boolean
@@ -80,12 +82,16 @@ function isSyncing(id: string) {
               rel="noreferrer"
               :title="record.quoteUrl"
             >
-              {{ record.orderNo || '報價單' }}
+              <SearchHighlight :text="record.orderNo || '報價單'" :query="searchQuery ?? ''" />
               <ExternalLink :size="12" :stroke-width="2" />
             </a>
-            <span v-else>{{ record.orderNo || '-' }}</span>
+            <span v-else>
+              <SearchHighlight :text="record.orderNo || '-'" :query="searchQuery ?? ''" />
+            </span>
           </td>
-          <td class="sticky-col sticky-col-2">{{ record.customerName || '-' }}</td>
+          <td class="sticky-col sticky-col-2">
+            <SearchHighlight :text="record.customerName || '-'" :query="searchQuery ?? ''" />
+          </td>
           <td class="sticky-col sticky-col-3 type-cell">
             <select
               class="type-select"

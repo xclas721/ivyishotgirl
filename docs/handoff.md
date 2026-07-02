@@ -11,7 +11,7 @@
 
 ---
 
-## 0. 目前實作現況（2026-06-30）
+## 0. 目前實作現況（2026-07-01）
 
 **線上已上線（過渡方案 — 個人／小團隊共用）**
 
@@ -27,7 +27,10 @@
 | 多帳號／業務隔離 | **尚未實作**（spec §2–§5 待決）                                                                                          |
 | 工程品質         | GitHub Actions CI、Vitest 單元測試、Prettier                                                                             |
 | 視覺特效         | `src/assets/effects.css`（頁面切換、KPI 閃爍、表格聚光等）                                                               |
-| 報價抓取         | **httpx** 靜態 HTML；Playwright fallback **尚未實作**                                                                    |
+| 報價抓取         | **httpx** 靜態 HTML；本機可啟用 **Playwright fallback**（`requirements-playwright.txt`；Vercel 建議 `PLAYWRIGHT_FALLBACK=0`） |
+| 案件搜尋         | 報價單紀錄區塊模糊搜尋（編號、客戶、季度等）；Esc 清除、關鍵字高亮、捲到首筆                                   |
+| 手機案件明細     | ≤768px 卡片式；桌面維持表格                                                                                      |
+| 篩選範圍總覽     | 預設顯示；排在「新增報價單」之後；手機 KPI 四欄橫排                                                              |
 
 **文件 §2–§5 與 spec** 描述的是**正式版（方案 B：多帳號 + 業務隔離 + 管理頁）**，標為待實作；**是否採用尚未定案**。
 
@@ -161,17 +164,21 @@ Supabase 需建立 Auth 使用者 **`gate@ivy.app`**（密碼由 Kyson 設定）
 
 ## 6. 已完成 vs 待做
 
-### 已完成（main，2026-06-30）
+### 已完成（main，2026-07-01）
 
 - 季度工作檯 UI、案件業務、簡易登入閘 + RLS
 - CalculatorView 拆分、`useQuoteWorkflow`、移除 clearAll
-- CI + Vitest + Python unittest
+- CI + Vitest + Python unittest + Playwright E2E smoke
 - 視覺特效（`effects.css`）
 - 側欄登出、session 過期回閘、DB 錯誤重試
 - **修改密碼**（共用帳號過渡版）
 - **手機版**：左上角選單滑出側邊欄；修正閃爍與底部橫向捲軸
+- **手機案件明細**：卡片式排版；月份欄位溢出修正
+- **報價單紀錄模糊搜尋**、CSV 檔名含季度+時間+搜尋詞
+- **篩選範圍總覽**：預設顯示、順序調整、手機四欄橫排
 - **新增報價單**客戶類型 select 與表格樣式統一（`type-select`）
-- README 與 Playwright 文件對齊（httpx 現況）
+- **Playwright fallback**（本機；httpx 失敗時重試）
+- README 與 Playwright 文件對齊
 
 ### 待做（見 [需求清單.md](./需求清單.md)）
 
@@ -194,4 +201,4 @@ Supabase 需建立 Auth 使用者 **`gate@ivy.app`**（密碼由 Kyson 設定）
 
 ---
 
-_最後更新：2026-06-30（改密、手機側欄 drawer、閃爍/捲軸修正、type-select 同步）_
+_最後更新：2026-07-01（搜尋高亮、Playwright fallback、E2E smoke、handoff 同步）_

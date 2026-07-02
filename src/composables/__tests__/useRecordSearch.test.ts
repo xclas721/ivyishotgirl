@@ -4,6 +4,7 @@ import {
   filterRecordsBySearch,
   matchesRecordSearch,
   normalizeSearchQuery,
+  searchHighlightParts,
 } from '@/composables/useRecordSearch'
 
 const baseRecord: BonusRecord = {
@@ -58,5 +59,19 @@ describe('filterRecordsBySearch', () => {
   it('filters by query', () => {
     const other: BonusRecord = { ...baseRecord, id: '2', orderNo: 'S99999', customerName: '其他公司' }
     expect(filterRecordsBySearch([baseRecord, other], '春日')).toEqual([baseRecord])
+  })
+})
+
+describe('searchHighlightParts', () => {
+  it('marks matching segments case-insensitively', () => {
+    expect(searchHighlightParts('S12242', '1224')).toEqual([
+      { text: 'S', match: false },
+      { text: '1224', match: true },
+      { text: '2', match: false },
+    ])
+  })
+
+  it('returns plain text when query is empty', () => {
+    expect(searchHighlightParts('春日町', '')).toEqual([{ text: '春日町', match: false }])
   })
 })
