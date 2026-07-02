@@ -1027,6 +1027,13 @@
     color: var(--color-muted);
   }
 
+  .search-highlight-mark {
+    padding: 0 1px;
+    border-radius: 2px;
+    background: rgba(168, 113, 46, 0.24);
+    color: inherit;
+  }
+
   .panel-tip {
     display: flex;
     align-items: flex-start;

@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
@@ -26,6 +27,7 @@
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^26.0.1",
     "@vitejs/plugin-vue": "^6.0.7",

@@ -12,6 +12,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from api.playwright_fetch import (
+    fetch_html_playwright,
+    playwright_available,
+    playwright_fallback_enabled,
+)
 from api.rate_limit import SlidingWindowRateLimiter
 
 app = FastAPI()
@@ -40,6 +45,12 @@ class FetchQuoteRequest(BaseModel):
 
 class GateLoginRequest(BaseModel):
     password: str
+
+
+class QuoteHttpError(Exception):
+    def __init__(self, status_code: int):
+        self.status_code = status_code
+        super().__init__(f"HTTP {status_code}")
 
 
 def _load_local_env() -> None:
@@ -178,26 +189,70 @@ async def fetch_quote(body: FetchQuoteRequest):
         return err(400, "INVALID_PROTOCOL", "報價單網址協定不支援", "只允許 http 或 https 網址。")
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
-            response = await client.get(quote_url, headers=BROWSER_HEADERS)
-
-        print(f"[fetch-quote] status: {response.status_code}, length: {len(response.text)}")
-
-        if not response.is_success:
-            return err(
-                response.status_code,
-                "QUOTE_HTTP_ERROR",
-                "quote 網站回傳錯誤",
-                f"quote.saiens.tw 回傳 HTTP {response.status_code}，可能網址、access_token 或權限有問題。",
-            )
-
-        html = response.text
-
+        html = await fetch_quote_html_httpx(quote_url)
+        print(f"[fetch-quote] httpx length: {len(html)}")
     except httpx.TimeoutException:
         return err(504, "TIMEOUT", "抓取逾時", "連線 quote.saiens.tw 超時，請稍後再試。")
+    except QuoteHttpError as exc:
+        return err(
+            exc.status_code,
+            "QUOTE_HTTP_ERROR",
+            "quote 網站回傳錯誤",
+            f"quote.saiens.tw 回傳 HTTP {exc.status_code}，可能網址、access_token 或權限有問題。",
+        )
     except Exception as exc:
         return err(500, "FETCH_ERROR", "抓取失敗", str(exc))
 
+    result = build_quote_result(html, quote_url)
+    if isinstance(result, JSONResponse) and should_try_playwright_fallback(html, quote_url):
+        try:
+            print("[fetch-quote] trying playwright fallback")
+            playwright_html = await fetch_html_playwright(quote_url)
+            print(f"[fetch-quote] playwright length: {len(playwright_html)}")
+            retry = build_quote_result(playwright_html, quote_url)
+            if not isinstance(retry, JSONResponse):
+                return retry
+        except Exception as exc:
+            print(f"[fetch-quote] playwright fallback failed: {exc}")
+
+    return result
+
+
+async def fetch_quote_html_httpx(quote_url: str) -> str:
+    async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
+        response = await client.get(quote_url, headers=BROWSER_HEADERS)
+
+    print(f"[fetch-quote] status: {response.status_code}, length: {len(response.text)}")
+
+    if not response.is_success:
+        raise QuoteHttpError(response.status_code)
+
+    return response.text
+
+
+def should_try_playwright_fallback(html: str, quote_url: str) -> bool:
+    if not playwright_fallback_enabled() or not playwright_available():
+        return False
+
+    diagnosis = diagnose_html(html)
+    if diagnosis["login_like"]:
+        return False
+
+    try:
+        quote = parse_quote_html(html, quote_url)
+    except ValueError as exc:
+        return "金額" in str(exc) or "動態" in str(exc)
+    except Exception:
+        return False
+
+    return (
+        not diagnosis["has_quote_keywords"]
+        and not quote.get("taxExcludedAmount")
+        and not quote.get("taxIncludedAmount")
+    )
+
+
+def build_quote_result(html: str, quote_url: str) -> dict[str, Any] | JSONResponse:
     diagnosis = diagnose_html(html)
 
     if diagnosis["login_like"]:

@@ -4,10 +4,12 @@ import type { BonusRecord } from '@/lib/db'
 import { commissionRateFor, customerTypeLabel } from '@/shared/customerType'
 import { multiplierFor, multiplierSummary } from '@/composables/ledger'
 import { finalCommissionDisplay } from '@/composables/ledgerSummary'
+import { normalizeSearchQuery } from '@/composables/useRecordSearch'
 
 export interface CsvExportFilter {
   selectedYear: number | 'all'
   selectedQuarter: Quarter | 'all'
+  searchQuery?: string
 }
 
 function csvCell(value: unknown) {
@@ -56,11 +58,25 @@ export function csvExportTimestamp(exportedAt: Date = new Date()): string {
   return `${year}${month}${day}-${hour}${minute}`
 }
 
+export function csvExportSearchSlug(searchQuery?: string): string {
+  const normalized = normalizeSearchQuery(searchQuery ?? '')
+  if (!normalized) return ''
+
+  const slug = normalized
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24)
+
+  return slug ? `-${slug}` : ''
+}
+
 export function buildCsvExportFilename(
   filter: CsvExportFilter,
   exportedAt: Date = new Date(),
 ): string {
-  return `ivy-bonus-${csvExportQuarterSlug(filter)}-${csvExportTimestamp(exportedAt)}.csv`
+  const searchSlug = csvExportSearchSlug(filter.searchQuery)
+  return `ivy-bonus-${csvExportQuarterSlug(filter)}${searchSlug}-${csvExportTimestamp(exportedAt)}.csv`
 }
 
 export function exportVisibleRecordsCsv(

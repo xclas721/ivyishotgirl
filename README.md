@@ -26,7 +26,14 @@ POST /api/fetch-quote
 
 ## 抓取報價
 
-後端以 **httpx** 抓取 `quote.saiens.tw` 的 HTML（同源 `/api/fetch-quote`）。若報價頁改為重度 JavaScript 動態渲染、現有抓取抓不到資料，需另加 Playwright fallback（**尚未實作**）。
+後端以 **httpx** 抓取 `quote.saiens.tw` 的 HTML（同源 `/api/fetch-quote`）。若靜態 HTML 抓不到金額，會在**本機**嘗試 **Playwright fallback**（需安裝瀏覽器；Vercel 正式環境預設關閉）。
+
+```sh
+pip install -r requirements-playwright.txt
+playwright install chromium
+```
+
+環境變數 `PLAYWRIGHT_FALLBACK=0` 可關閉 fallback（建議 Vercel 使用）。
 
 ## 計算規則
 

@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { nextTick, watch } from 'vue'
 import { CircleAlert, Search, X } from 'lucide-vue-next'
 import { MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
 import type { BonusRecord } from '@/lib/db'
+import { normalizeSearchQuery } from '@/composables/useRecordSearch'
 import RecordsTable from '@/components/ledger/RecordsTable.vue'
 import RecordsCardList from '@/components/ledger/RecordsCardList.vue'
 
@@ -45,6 +47,26 @@ function showToolbar() {
 function showSearch() {
   return props.allRecordsCount > 0
 }
+
+function clearSearch() {
+  searchQuery.value = ''
+}
+
+function scrollToFirstMatch() {
+  const first = props.records[0]
+  if (!first) return
+  document.getElementById(`record-row-${first.id}`)?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'nearest',
+  })
+}
+
+watch(searchQuery, async (query) => {
+  const normalized = normalizeSearchQuery(query)
+  if (!normalized || props.records.length === 0) return
+  await nextTick()
+  scrollToFirstMatch()
+})
 </script>
 
 <template>
@@ -82,6 +104,7 @@ function showSearch() {
           enterkeyhint="search"
           autocomplete="off"
           placeholder="搜尋案件編號、客戶、季度…"
+          @keydown.escape.prevent="clearSearch"
         />
         <button
           v-if="searchQuery"
@@ -105,6 +128,7 @@ function showSearch() {
       <RecordsCardList
         class="records-cards-mobile"
         :records="records"
+        :search-query="searchQuery"
         :highlight-id="highlightId"
         :is-file-mode="isFileMode"
         :is-syncing-all="isSyncingAll"
@@ -114,6 +138,7 @@ function showSearch() {
       />
       <RecordsTable
         :records="records"
+        :search-query="searchQuery"
         :highlight-id="highlightId"
         :is-file-mode="isFileMode"
         :is-loading="isLoading"

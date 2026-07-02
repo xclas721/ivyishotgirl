@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildCsvExportFilename,
   csvExportQuarterSlug,
+  csvExportSearchSlug,
   csvExportTimestamp,
 } from '@/lib/csvExport'
 
@@ -37,5 +38,20 @@ describe('buildCsvExportFilename', () => {
         new Date(2026, 5, 30, 8, 5),
       ),
     ).toBe('ivy-bonus-2026-Q2-20260630-0805.csv')
+  })
+
+  it('includes search slug when query is present', () => {
+    expect(
+      buildCsvExportFilename(
+        { selectedYear: 2026, selectedQuarter: 'Q2', searchQuery: '春日 Ivy' },
+        new Date(2026, 5, 30, 8, 5),
+      ),
+    ).toBe('ivy-bonus-2026-Q2-春日-ivy-20260630-0805.csv')
+  })
+})
+
+describe('csvExportSearchSlug', () => {
+  it('returns empty string for blank query', () => {
+    expect(csvExportSearchSlug('   ')).toBe('')
   })
 })

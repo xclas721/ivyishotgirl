@@ -5,6 +5,7 @@ import RecordCard from '@/components/ledger/RecordCard.vue'
 
 const props = defineProps<{
   records: BonusRecord[]
+  searchQuery?: string
   highlightId?: string
   isFileMode: boolean
   isSyncingAll: boolean
@@ -32,6 +33,7 @@ function isSyncing(id: string) {
       :id="`record-row-${record.id}`"
       :key="record.id"
       :record="record"
+      :search-query="searchQuery"
       :highlighted="record.id === highlightId"
       :is-file-mode="isFileMode"
       :is-syncing="isSyncing(record.id)"
