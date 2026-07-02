@@ -6,7 +6,7 @@ _executor = ThreadPoolExecutor(max_workers=1)
 
 
 def playwright_fallback_enabled() -> bool:
-    return os.getenv("PLAYWRIGHT_FALLBACK", "1").strip().lower() in ("1", "true", "yes")
+    return os.getenv("PLAYWRIGHT_FALLBACK", "0").strip().lower() in ("1", "true", "yes")
 
 
 def playwright_available() -> bool:

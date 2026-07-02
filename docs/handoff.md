@@ -27,7 +27,7 @@
 | 多帳號／業務隔離 | **尚未實作**（spec §2–§5 待決）                                                                                          |
 | 工程品質         | GitHub Actions CI、Vitest 單元測試、Prettier                                                                             |
 | 視覺特效         | `src/assets/effects.css`（頁面切換、KPI 閃爍、表格聚光等）                                                               |
-| 報價抓取         | **httpx** 靜態 HTML；本機可啟用 **Playwright fallback**（`requirements-playwright.txt`；Vercel 建議 `PLAYWRIGHT_FALLBACK=0`） |
+| 報價抓取         | **httpx** 靜態 HTML；本機可設 `PLAYWRIGHT_FALLBACK=1` 啟用 Playwright 備援（預設關閉；Vercel 無需設定） |
 | 案件搜尋         | 報價單紀錄區塊模糊搜尋（編號、客戶、季度等）；Esc 清除、關鍵字高亮、捲到首筆                                   |
 | 手機案件明細     | ≤768px 卡片式；桌面維持表格                                                                                      |
 | 篩選範圍總覽     | 預設顯示；排在「新增報價單」之後；手機 KPI 四欄橫排                                                              |
