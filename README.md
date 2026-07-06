@@ -2,6 +2,12 @@
 
 Vue + TypeScript 前端，搭配 FastAPI proxy 抓取報價單資料的季度獎金帳本。
 
+## 文件
+
+- [交接說明（handoff）](./docs/handoff.md) — 現況、業務規則、個人版驗收評分
+- [接手提示詞](./docs/handoff-prompt.md)
+- [需求清單](./docs/需求清單.md)
+
 ## 啟動
 
 ```sh
