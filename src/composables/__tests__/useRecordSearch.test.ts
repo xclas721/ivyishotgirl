@@ -57,7 +57,12 @@ describe('filterRecordsBySearch', () => {
   })
 
   it('filters by query', () => {
-    const other: BonusRecord = { ...baseRecord, id: '2', orderNo: 'S99999', customerName: '其他公司' }
+    const other: BonusRecord = {
+      ...baseRecord,
+      id: '2',
+      orderNo: 'S99999',
+      customerName: '其他公司',
+    }
     expect(filterRecordsBySearch([baseRecord, other], '春日')).toEqual([baseRecord])
   })
 })

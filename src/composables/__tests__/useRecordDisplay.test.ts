@@ -19,9 +19,9 @@ const baseRecord: BonusRecord = {
 
 describe('recordWarnings', () => {
   it('flags missing signed month and unknown customer type', () => {
-    expect(
-      recordWarnings({ ...baseRecord, signedMonth: '', customerType: 'unknown' }),
-    ).toContain('回簽月份')
+    expect(recordWarnings({ ...baseRecord, signedMonth: '', customerType: 'unknown' })).toContain(
+      '回簽月份',
+    )
   })
 })
 

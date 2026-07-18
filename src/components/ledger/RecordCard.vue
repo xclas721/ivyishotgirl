@@ -11,11 +11,7 @@ import {
   multiplierSummary,
   updateRecord,
 } from '@/composables/ledger'
-import {
-  formatFinalCommission,
-  quarterLabel,
-  recordWarnings,
-} from '@/composables/useRecordDisplay'
+import { formatFinalCommission, quarterLabel, recordWarnings } from '@/composables/useRecordDisplay'
 import SearchHighlight from '@/components/ui/SearchHighlight.vue'
 
 defineProps<{
@@ -37,11 +33,7 @@ const signedQuarterKey = (record: BonusRecord) => getFiscalQuarter(record.signed
 </script>
 
 <template>
-  <article
-    :id="id"
-    class="record-card"
-    :class="{ 'record-card--highlighted': highlighted }"
-  >
+  <article :id="id" class="record-card" :class="{ 'record-card--highlighted': highlighted }">
     <header class="record-card-head">
       <div class="record-card-identity">
         <a
@@ -95,18 +87,10 @@ const signedQuarterKey = (record: BonusRecord) => getFiscalQuarter(record.signed
           class="type-select"
           :class="{ unknown: record.customerType === 'unknown' }"
           :value="record.customerType"
-          @change="
-            updateRecord(record, 'customerType', ($event.target as HTMLSelectElement).value)
-          "
+          @change="updateRecord(record, 'customerType', ($event.target as HTMLSelectElement).value)"
         >
-          <option v-if="record.customerType === 'unknown'" value="unknown" disabled>
-            請選擇
-          </option>
-          <option
-            v-for="option in CUSTOMER_TYPE_OPTIONS"
-            :key="option.value"
-            :value="option.value"
-          >
+          <option v-if="record.customerType === 'unknown'" value="unknown" disabled>請選擇</option>
+          <option v-for="option in CUSTOMER_TYPE_OPTIONS" :key="option.value" :value="option.value">
             {{ option.label }}（{{ option.rate }}%）
           </option>
         </select>
@@ -130,7 +114,9 @@ const signedQuarterKey = (record: BonusRecord) => getFiscalQuarter(record.signed
             <input
               :value="record.signedMonth"
               type="month"
-              @input="updateRecord(record, 'signedMonth', ($event.target as HTMLInputElement).value)"
+              @input="
+                updateRecord(record, 'signedMonth', ($event.target as HTMLInputElement).value)
+              "
             />
           </span>
           <span class="record-card-meta">季度 {{ quarterLabel(record.signedMonth) }}</span>
@@ -188,9 +174,7 @@ const signedQuarterKey = (record: BonusRecord) => getFiscalQuarter(record.signed
               multiplierSummary(signedQuarterKey(record), multiplierFor(signedQuarterKey(record)))
             "
           >
-            ×{{
-              formatNumber(combinedMultiplier(multiplierFor(signedQuarterKey(record))))
-            }}
+            ×{{ formatNumber(combinedMultiplier(multiplierFor(signedQuarterKey(record)))) }}
           </strong>
           <span
             v-if="isDefaultMultiplier(multiplierFor(signedQuarterKey(record)))"
