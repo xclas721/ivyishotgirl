@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   X,
 } from 'lucide-vue-next'
+import { SpeedInsights } from '@vercel/speed-insights/vue'
 import QuarterContextBar from '@/components/layout/QuarterContextBar.vue'
 import PasswordGate from '@/components/PasswordGate.vue'
 import ChangePasswordModal from '@/components/ChangePasswordModal.vue'
@@ -103,12 +104,7 @@ onUnmounted(() => {
       </button>
 
       <Transition name="sidebar-backdrop">
-        <div
-          v-if="sidebarOpen"
-          class="sidebar-backdrop"
-          aria-hidden="true"
-          @click="closeSidebar"
-        />
+        <div v-if="sidebarOpen" class="sidebar-backdrop" aria-hidden="true" @click="closeSidebar" />
       </Transition>
 
       <nav class="sidebar" :class="{ 'is-open': sidebarOpen }" aria-label="主要導覽">
@@ -156,6 +152,7 @@ onUnmounted(() => {
         </RouterView>
       </div>
       <ChangePasswordModal v-model="showChangePassword" />
+      <SpeedInsights />
     </div>
   </Transition>
 </template>

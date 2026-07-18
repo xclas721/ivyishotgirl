@@ -11,7 +11,4 @@ if (!supabaseConfigured) {
   )
 }
 
-export const supabase = createClient(
-  url || 'https://placeholder.invalid',
-  key || 'public-anon-key',
-)
+export const supabase = createClient(url || 'https://placeholder.invalid', key || 'public-anon-key')
