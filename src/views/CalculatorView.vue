@@ -66,6 +66,7 @@ const {
       <LedgerOverviewPanel
         v-if="isSectionVisible('overview')"
         :summary="ledgerSummary"
+        :records="visibleRecords"
         :record-count="visibleRecords.length"
       />
 

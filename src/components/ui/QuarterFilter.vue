@@ -13,7 +13,7 @@ import { filterYears, selectedQuarter, selectedYear } from '@/composables/ledger
       </select>
     </label>
     <label class="year-filter">
-      季度
+      收款季度
       <select v-model="selectedQuarter">
         <option value="all">全部</option>
         <option v-for="q in ['Q1', 'Q2', 'Q3', 'Q4'] as Quarter[]" :key="q" :value="q">
