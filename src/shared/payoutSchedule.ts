@@ -1,31 +1,31 @@
 import { getFiscalQuarter } from '@/shared/fiscalQuarter'
 
-/** Company payout months: May / Aug / Nov / Feb. */
+/**
+ * Company bonus disbursement months (公司發獎金月):
+ * - 5月發 → 統計收款季度 Q1（2–4 月收款）
+ * - 8月發 → 統計收款季度 Q2（5–7 月收款）
+ * - 11月發 → 統計收款季度 Q3（8–10 月收款）
+ * - 2月發 → 統計收款季度前一年 Q4（11–12 + 1 月收款）
+ */
 export const PAYOUT_MONTHS = [5, 8, 11, 2] as const
 
 export type PayoutMonth = (typeof PAYOUT_MONTHS)[number]
 
 export interface PayoutWave {
-  /** Calendar year of the payout (領錢) month */
+  /** Calendar year of the company disbursement month */
   payoutYear: number
   /** 5 | 8 | 11 | 2 */
   payoutMonth: PayoutMonth
-  /** YYYY-MM of 收款／領錢 */
-  paidMonth: string
-  /** Work quarter this wave pays for, e.g. 2026-Q2 */
-  workQuarterKey: string
-  /** Human range for work quarter, e.g. 2026/05-2026/07 */
-  workQuarterRange: string
+  /** 收款季度 this wave pays out, e.g. 2026-Q2 */
+  collectionQuarterKey: string
+  /** Human range for collection quarter, e.g. 2026/05-2026/07 */
+  collectionQuarterRange: string
   /** Title fragment, e.g. 8 月發放 */
   payoutMonthLabel: string
 }
 
-function pad2(n: number) {
-  return String(n).padStart(2, '0')
-}
-
-function workQuarterForPayout(payoutYear: number, payoutMonth: PayoutMonth) {
-  // 5月領 → Q1；8月領 → Q2；11月領 → Q3；2月領 → 前一年 Q4
+function collectionQuarterForPayout(payoutYear: number, payoutMonth: PayoutMonth) {
+  // 5月發 → Q1；8月發 → Q2；11月發 → Q3；2月發 → 前一年 Q4
   if (payoutMonth === 5) {
     return getFiscalQuarter(`${payoutYear}-03`)
   }
@@ -35,18 +35,17 @@ function workQuarterForPayout(payoutYear: number, payoutMonth: PayoutMonth) {
   if (payoutMonth === 11) {
     return getFiscalQuarter(`${payoutYear}-09`)
   }
-  // February pays previous fiscal Q4
+  // February pays previous fiscal Q4 collections
   return getFiscalQuarter(`${payoutYear}-01`)
 }
 
 export function buildPayoutWave(payoutYear: number, payoutMonth: PayoutMonth): PayoutWave {
-  const work = workQuarterForPayout(payoutYear, payoutMonth)
+  const collection = collectionQuarterForPayout(payoutYear, payoutMonth)
   return {
     payoutYear,
     payoutMonth,
-    paidMonth: `${payoutYear}-${pad2(payoutMonth)}`,
-    workQuarterKey: work.key,
-    workQuarterRange: work.range,
+    collectionQuarterKey: collection.key,
+    collectionQuarterRange: collection.range,
     payoutMonthLabel: `${payoutMonth} 月發放`,
   }
 }
@@ -84,8 +83,11 @@ export function shiftPayoutWave(wave: PayoutWave, delta: -1 | 1): PayoutWave {
   return buildPayoutWave(year, order[nextIndex]!)
 }
 
-export function isPayoutMonthString(monthString: string): boolean {
-  if (!/^\d{4}-(0[2-9]|1[0-2])$/.test(monthString)) return false
-  const month = Number(monthString.slice(5))
-  return (PAYOUT_MONTHS as readonly number[]).includes(month)
+/** True when a record's 收款月份 falls in this wave's 收款季度. */
+export function recordMatchesPayoutWave(
+  paidMonth: string,
+  wave: Pick<PayoutWave, 'collectionQuarterKey'>,
+): boolean {
+  const key = getFiscalQuarter(paidMonth).key
+  return Boolean(key) && key === wave.collectionQuarterKey
 }
