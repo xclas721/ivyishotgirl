@@ -1,5 +1,9 @@
 import { computed } from 'vue'
-import { getFiscalQuarter, multipliersApply } from '@/shared/fiscalQuarter'
+import {
+  getFiscalQuarter,
+  LEGACY_FLAT_COMMISSION_RATE,
+  multipliersApply,
+} from '@/shared/fiscalQuarter'
 import type { QuarterInfo } from '@/shared/fiscalQuarter'
 import type { BonusRecord } from '@/lib/db'
 import { commissionRateFor } from '@/shared/customerType'
@@ -25,21 +29,33 @@ export interface LedgerSummaryResult {
   paid: QuarterSummary[]
 }
 
+/** Effective % for a record: flat 3.5% before 2026-Q2; otherwise by customer type. */
+export function commissionRateForRecord(record: BonusRecord): number {
+  const signedQuarter = getFiscalQuarter(record.signedMonth).key
+  if (!signedQuarter) return commissionRateFor(record.customerType)
+  if (!multipliersApply(signedQuarter)) return LEGACY_FLAT_COMMISSION_RATE
+  return commissionRateFor(record.customerType)
+}
+
 export function baseCommissionFor(record: BonusRecord) {
-  const rate = commissionRateFor(record.customerType)
+  const rate = commissionRateForRecord(record)
   return (toNumber(record.taxExcludedAmount) * rate) / 100
 }
 
 export function isCommissionComputable(record: BonusRecord): boolean {
-  return multipliersApply(getFiscalQuarter(record.signedMonth).key)
+  return Boolean(getFiscalQuarter(record.signedMonth).key)
 }
 
 export function finalCommissionFor(record: BonusRecord) {
   const signedQuarter = getFiscalQuarter(record.signedMonth).key
-  if (!multipliersApply(signedQuarter)) return 0
+  if (!signedQuarter) return 0
+
+  const base = baseCommissionFor(record)
+  if (!multipliersApply(signedQuarter)) return Math.round(base)
+
   const multiplier = multiplierFor(signedQuarter)
   return Math.round(
-    baseCommissionFor(record) *
+    base *
       toNumber(multiplier.rocket || 1) *
       toNumber(multiplier.repurchase || 1) *
       toNumber(multiplier.avgOrder || 1) *
@@ -79,7 +95,7 @@ export function summarizeRecords(source: BonusRecord[]): LedgerSummaryResult {
   source.forEach((record) => {
     const signedQuarter = getFiscalQuarter(record.signedMonth)
     const paidQuarter = getFiscalQuarter(record.paidMonth)
-    const computable = multipliersApply(signedQuarter.key)
+    const computable = isCommissionComputable(record)
     const final = computable ? finalCommissionFor(record) : 0
     if (computable) totals.final += final
     else totals.uncomputableCount += 1

@@ -44,9 +44,11 @@ const summary = ledgerSummary
           <template v-if="item.computableCount > 0">{{ item.computableCount }} 筆計入</template>
           <template v-if="item.count > item.computableCount">
             <span v-if="item.computableCount > 0"> · </span>
-            {{ item.count - item.computableCount }} 筆無倍率未計入
+            {{ item.count - item.computableCount }} 筆缺回簽月份未計入
           </template>
-          <template v-if="item.computableCount === 0 && item.count > 0"> 皆為無倍率季度</template>
+          <template v-if="item.computableCount === 0 && item.count > 0">
+            皆缺回簽月份，無法計算
+          </template>
         </p>
       </article>
     </div>

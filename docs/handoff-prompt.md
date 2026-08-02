@@ -37,7 +37,7 @@ Vue 3 + TS + Tailwind v4 | FastAPI api/index.py | Supabase | Vercel
 - 客戶類型：biz 2% / kitchen 3% / designer 4% / personal 5%
 - 新增時自選客戶類型；再同步 preserveCustomerFields 不覆寫類型
 - sales_rep 從報價單自動帶入；再同步會更新（抓不到保留原值）
-- 2026-Q2 前季度最終獎金「無法計算」，不計入發放總計
+- 2026-Q1 及更早：固定 3.5%、無四倍率；2026-Q2 起才套用客戶類型%與四倍率
 
 ## 安全與登入
 

@@ -9,8 +9,11 @@ export interface QuarterInfo {
 }
 
 // Quarter multipliers only apply from this fiscal quarter onward. Anything
-// before it (e.g. 2026-Q1 and earlier) earns base commission with no multiplier.
+// before it (e.g. 2026-Q1 and earlier) uses a flat rate with no multiplier.
 export const MULTIPLIER_START_KEY = '2026-Q2'
+
+/** Flat commission % for signed quarters before MULTIPLIER_START_KEY. */
+export const LEGACY_FLAT_COMMISSION_RATE = 3.5
 
 function quarterKeyOrder(key: string): number {
   const match = /^(\d{4})-Q([1-4])$/.exec(key)

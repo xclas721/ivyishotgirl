@@ -133,8 +133,8 @@ Kyson 慣例：**不要自動 build/test**，除非他明確要求。commit/push
 
 ### 倍率
 
-- 自 **2026-Q2** 起適用（`MULTIPLIER_START_KEY`）
-- 更早季度：最終獎金顯示「無法計算」，不計入發放總計
+- 自 **2026-Q2** 起適用（`MULTIPLIER_START_KEY`）：客戶類型基礎% × 四倍率
+- **2026-Q1 及更早**：固定 **3.5%**（`LEGACY_FLAT_COMMISSION_RATE`）、無四倍率；可正常計算並計入總計
 
 ### 案件業務 `sales_rep`（已完成）
 

@@ -134,7 +134,7 @@ tags: [architecture, security, auth, supabase, vue, fastapi]
 - **GUD-002**: 再同步報價 SHALL 更新 `sales_rep`；抓不到時保留原值（既有行為）。
 - **GUD-003**: 新增案件時客戶類型由使用者選；再同步 SHALL NOT 覆寫客戶類型（`preserveCustomerFields`）。
 - **GUD-004**: 客戶類型 % 由程式推導，不存 DB：`biz` 2%、`kitchen` 3%、`designer` 4%、`personal` 5%。
-- **GUD-005**: 季度倍率自 `2026-Q2`（`MULTIPLIER_START_KEY`）起適用；更早季度顯示「無法計算」。
+- **GUD-005**: 季度倍率自 `2026-Q2`（`MULTIPLIER_START_KEY`）起適用；更早季度（含 2026-Q1）固定 3.5%、無四倍率。
 - **GUD-006**: `multiplierFor(key)`：DB 無該 key 時 fallback 記憶體預設 `(1,1,1,1)`；與訪客試算一致。
 - **GUD-007**: 改密 SHALL 經 `POST /api/auth/change-password`（或等效流程）：更新 Auth 密碼後，後端以 service role 將 `must_change_password=false`。
 - **GUD-008**: 既有 `bonus_records` 上線 RLS 前 SHALL 已清空，或 ivy 先建立別名；否則 rep 可能看不到歷史列（預期行為）。

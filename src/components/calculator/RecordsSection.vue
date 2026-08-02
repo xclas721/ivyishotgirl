@@ -153,7 +153,9 @@ watch(searchQuery, async (query) => {
       <ul class="panel-tip-list">
         <li>1 月算前一年度的 Q4。</li>
         <li>同一個網址重複新增，會更新原本那筆。</li>
-        <li>倍率和最終獎金從 {{ MULTIPLIER_START_KEY }} 才開始算，更早的季度算不出來。</li>
+        <li>
+          {{ MULTIPLIER_START_KEY }} 起套用客戶類型%與四倍率；更早季度（含 2026-Q1）固定 3.5%、無倍率。
+        </li>
       </ul>
     </aside>
   </section>
