@@ -2,6 +2,7 @@
 import DbStatusBanner from '@/components/layout/DbStatusBanner.vue'
 import QuoteAddForm from '@/components/calculator/QuoteAddForm.vue'
 import LedgerOverviewPanel from '@/components/calculator/LedgerOverviewPanel.vue'
+import PayoutReleasePanel from '@/components/calculator/PayoutReleasePanel.vue'
 import RecordsSection from '@/components/calculator/RecordsSection.vue'
 import SignedQuarterStats from '@/components/ledger/SignedQuarterStats.vue'
 import PaidQuarterStats from '@/components/ledger/PaidQuarterStats.vue'
@@ -67,6 +68,8 @@ const {
         :summary="ledgerSummary"
         :record-count="visibleRecords.length"
       />
+
+      <PayoutReleasePanel v-if="isSectionVisible('overview')" />
 
       <RecordsSection
         v-model:search-query="recordSearchQuery"

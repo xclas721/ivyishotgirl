@@ -1145,6 +1145,30 @@
     line-height: 1.4;
   }
 
+  .payout-release-title h2 {
+    margin-bottom: 4px;
+  }
+
+  .payout-release-sub {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-muted);
+    line-height: 1.45;
+  }
+
+  .payout-release-hint {
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: var(--color-muted);
+    line-height: 1.5;
+  }
+
+  .payout-release-nav .secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
   /* Quarter stats */
   .quarter-section-head {
     margin-bottom: 16px;
