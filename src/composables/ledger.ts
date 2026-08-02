@@ -13,8 +13,9 @@ export const isLoading = ref(true)
 export const dbError = ref('')
 
 // Year/quarter filter, shared across pages. 'all' shows everything; otherwise
-// only the data whose 收款 (paid) fiscal year/quarter matches — i.e. 發放季度.
-// Defaults to the current fiscal quarter so the view opens on 本季度.
+// only the data whose 收款 (paid) fiscal year/quarter matches.
+// Defaults to today's fiscal quarter (e.g. August → Q3). Independent from
+// 「上季獎金發放」which tracks company payout months 5/8/11/2.
 const currentFiscal = getFiscalQuarter(new Date().toISOString().slice(0, 7))
 export const selectedYear = ref<number | 'all'>(currentFiscal.year || 'all')
 export const selectedQuarter = ref<Quarter | 'all'>(currentFiscal.quarter || 'all')
