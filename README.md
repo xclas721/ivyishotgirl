@@ -48,6 +48,7 @@ playwright install chromium
 - 回簽月份優先從報價單底部歷史訊息、chatter、timeline 判斷，優先找「簽名 + PDF 附件 + 報價單編號」。
 - 回簽月份決定獎金%與季度倍率。
 - 收款月份決定實際發放季度。
+- **2026-Q1 及更早**：固定 3.5%、不套四倍率；**2026-Q2 起**：客戶類型基礎% × 四倍率。
 - 財務季度：2-4 月 Q1、5-7 月 Q2、8-10 月 Q3、11-12 月與隔年 1 月 Q4；1 月歸前一年度 Q4。
 - 季度倍率存在 `quarterMultipliers`，每筆案件只保存案件資料。
 - 資料保存在 Supabase（`bonus_records`、`quarter_multipliers` 兩張表）。

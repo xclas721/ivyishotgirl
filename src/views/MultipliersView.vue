@@ -83,7 +83,7 @@ function commitAddYear() {
             <span v-if="!multipliersApply(`${year}-${quarter}`)" class="no-mult-tag">無倍率</span>
           </strong>
           <p v-if="!multipliersApply(`${year}-${quarter}`)" class="hint">
-            這一季只算基礎獎金，不套倍率（倍率自 {{ MULTIPLIER_START_KEY }} 起適用）。
+            這一季固定 3.5%、不套倍率（倍率自 {{ MULTIPLIER_START_KEY }} 起適用）。
           </p>
           <div v-else class="multiplier-grid">
             <label v-for="field in multiplierFields" :key="field">

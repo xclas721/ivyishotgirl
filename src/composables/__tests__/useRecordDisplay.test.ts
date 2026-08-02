@@ -32,7 +32,12 @@ describe('quarterLabel', () => {
 })
 
 describe('formatFinalCommission', () => {
-  it('returns label for pre-multiplier quarters', () => {
-    expect(formatFinalCommission({ ...baseRecord, signedMonth: '2026-03' })).toBe('無法計算')
+  it('formats legacy flat-rate quarters as money', () => {
+    // 100000 × 3.5% = 3500
+    expect(formatFinalCommission({ ...baseRecord, signedMonth: '2026-03' })).toMatch(/3,?500/)
+  })
+
+  it('returns label when signed month is missing', () => {
+    expect(formatFinalCommission({ ...baseRecord, signedMonth: '' })).toBe('無法計算')
   })
 })

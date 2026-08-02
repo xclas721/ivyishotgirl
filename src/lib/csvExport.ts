@@ -1,9 +1,12 @@
 import { getFiscalQuarter, multipliersApply } from '@/shared/fiscalQuarter'
 import type { Quarter } from '@/shared/fiscalQuarter'
 import type { BonusRecord } from '@/lib/db'
-import { commissionRateFor, customerTypeLabel } from '@/shared/customerType'
+import { customerTypeLabel } from '@/shared/customerType'
 import { multiplierFor, multiplierSummary } from '@/composables/ledger'
-import { finalCommissionDisplay } from '@/composables/ledgerSummary'
+import {
+  commissionRateForRecord,
+  finalCommissionDisplay,
+} from '@/composables/ledgerSummary'
 import { normalizeSearchQuery } from '@/composables/useRecordSearch'
 
 export interface CsvExportFilter {
@@ -122,7 +125,7 @@ export function exportVisibleRecordsCsv(
         paidQuarter.key,
         Math.round(record.taxExcludedAmount),
         Math.round(record.taxIncludedAmount),
-        commissionRateFor(record.customerType),
+        commissionRateForRecord(record),
         multiplierText,
         finalCommissionDisplay(record),
         record.signedAtText,

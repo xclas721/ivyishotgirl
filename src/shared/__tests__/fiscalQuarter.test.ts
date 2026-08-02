@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { getFiscalQuarter, multipliersApply, MULTIPLIER_START_KEY } from '@/shared/fiscalQuarter'
+import {
+  getFiscalQuarter,
+  LEGACY_FLAT_COMMISSION_RATE,
+  multipliersApply,
+  MULTIPLIER_START_KEY,
+} from '@/shared/fiscalQuarter'
 
 describe('getFiscalQuarter', () => {
   it('maps calendar months to fiscal quarters', () => {
@@ -22,6 +27,7 @@ describe('getFiscalQuarter', () => {
 describe('multipliersApply', () => {
   it('applies multipliers from MULTIPLIER_START_KEY onward', () => {
     expect(MULTIPLIER_START_KEY).toBe('2026-Q2')
+    expect(LEGACY_FLAT_COMMISSION_RATE).toBe(3.5)
     expect(multipliersApply('2026-Q1')).toBe(false)
     expect(multipliersApply('2026-Q2')).toBe(true)
     expect(multipliersApply('2027-Q1')).toBe(true)

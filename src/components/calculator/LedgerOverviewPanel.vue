@@ -24,7 +24,7 @@ const integer = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 })
         <span>發放總獎金</span>
         <strong>{{ money.format(summary.totals.final) }}</strong>
         <small v-if="summary.totals.uncomputableCount > 0" class="total-note">
-          未含 {{ summary.totals.uncomputableCount }} 筆無倍率季度（無法計算）
+          未含 {{ summary.totals.uncomputableCount }} 筆缺回簽月份（無法計算）
         </small>
       </div>
       <div class="total">

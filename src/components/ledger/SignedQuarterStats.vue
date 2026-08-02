@@ -43,23 +43,23 @@ const summary = ledgerSummary
         </div>
         <div class="quarter-hero">
           <span class="quarter-hero-label">應計獎金</span>
-          <strong class="quarter-hero-amount" :class="{ 'is-muted': !multipliersApply(item.key) }">
-            {{ multipliersApply(item.key) ? money.format(item.final) : '無法計算' }}
+          <strong class="quarter-hero-amount">
+            {{ money.format(item.final) }}
           </strong>
           <p v-if="!multipliersApply(item.key)" class="quarter-hero-note">
-            倍率自 {{ MULTIPLIER_START_KEY }} 起適用
+            固定 3.5%、無倍率（倍率自 {{ MULTIPLIER_START_KEY }} 起適用）
           </p>
         </div>
-        <div v-if="multipliersApply(item.key)" class="quarter-breakdown">
+        <div class="quarter-breakdown">
           <div class="quarter-breakdown-row">
             <span>簽約未連稅合計</span>
             <b>{{ money.format(item.taxExcludedAmount) }}</b>
           </div>
           <div class="quarter-breakdown-row">
-            <span>基礎獎金小計</span>
+            <span>{{ multipliersApply(item.key) ? '基礎獎金小計' : '獎金小計（3.5%）' }}</span>
             <b>{{ money.format(item.base) }}</b>
           </div>
-          <div class="quarter-breakdown-row">
+          <div v-if="multipliersApply(item.key)" class="quarter-breakdown-row">
             <span>季度倍率</span>
             <b class="quarter-mult" :title="formatMultiplier(multiplierFor(item.key))">
               ×{{ formatNumber(combinedMultiplier(multiplierFor(item.key))) }}
