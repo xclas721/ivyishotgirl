@@ -17,7 +17,7 @@ const showLedgerTabs = computed(() => route.path === '/')
   <div v-if="showBar" class="quarter-context-shell">
     <div class="quarter-context-bar">
       <p class="quarter-context-title">
-        <span class="quarter-context-label">工作季度</span>
+        <span class="quarter-context-label">發放季度</span>
         {{ filterContextLabel }}
       </p>
       <QuarterFilter />

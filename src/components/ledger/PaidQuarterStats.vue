@@ -18,7 +18,7 @@ const summary = ledgerSummary
         <p class="quarter-section-tag">依收款月份</p>
         <h2>發放季度實領</h2>
         <p class="quarter-section-desc">
-          這一季<strong>實際入帳</strong>會領到多少。金額還是按各案的回簽季度算，只是改用收款時間歸類。
+          在目前發放篩選範圍內，依<strong>收款／發放季度</strong>歸類的實領獎金（金額仍按各案回簽季度計算）。
         </p>
       </div>
     </div>

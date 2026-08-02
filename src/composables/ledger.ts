@@ -13,8 +13,8 @@ export const isLoading = ref(true)
 export const dbError = ref('')
 
 // Year/quarter filter, shared across pages. 'all' shows everything; otherwise
-// only the data whose 回簽 (signed) fiscal year/quarter matches. Defaults to the
-// current fiscal quarter so the view opens on 本季度.
+// only the data whose 收款 (paid) fiscal year/quarter matches — i.e. 發放季度.
+// Defaults to the current fiscal quarter so the view opens on 本季度.
 const currentFiscal = getFiscalQuarter(new Date().toISOString().slice(0, 7))
 export const selectedYear = ref<number | 'all'>(currentFiscal.year || 'all')
 export const selectedQuarter = ref<Quarter | 'all'>(currentFiscal.quarter || 'all')
@@ -137,8 +137,10 @@ export const multiplierYears = computed(() => {
     if (year) years.add(Number(year))
   })
   records.value.forEach((record) => {
-    const year = getFiscalQuarter(record.signedMonth).year
-    if (year) years.add(year)
+    const signedYear = getFiscalQuarter(record.signedMonth).year
+    if (signedYear) years.add(signedYear)
+    const paidYear = getFiscalQuarter(record.paidMonth).year
+    if (paidYear) years.add(paidYear)
   })
   return Array.from(years).sort((a, b) => b - a)
 })
@@ -154,19 +156,15 @@ function recordMatchesFilter(
   return true
 }
 
-// Records limited to the selected 回簽 year and quarter (or all of them).
+// Records limited to the selected 發放 (收款) year and quarter (or all of them).
 export const visibleRecords = computed(() =>
-  records.value.filter((r) =>
-    recordMatchesFilter(r.signedMonth, selectedYear.value, selectedQuarter.value),
-  ),
-)
-
-// Same filter dimensions applied to 收款月份 — used for context-bar 實領 KPI.
-export const paidVisibleRecords = computed(() =>
   records.value.filter((r) =>
     recordMatchesFilter(r.paidMonth, selectedYear.value, selectedQuarter.value),
   ),
 )
+
+/** @deprecated Same as visibleRecords — filter is by 發放季度 (paidMonth). */
+export const paidVisibleRecords = visibleRecords
 
 const QUARTER_REP_MONTH: Record<Quarter, string> = {
   Q1: '02',
@@ -188,9 +186,9 @@ export const filterContextLabel = computed(() => {
   return `${yearPart} · ${quarterPart}`
 })
 
-// Align the global quarter filter so a record's signed month is visible.
-export function applyFilterForSignedMonth(signedMonth: string) {
-  const q = getFiscalQuarter(signedMonth)
+// Align the global quarter filter so a record's paid (發放) month is visible.
+export function applyFilterForPaidMonth(paidMonth: string) {
+  const q = getFiscalQuarter(paidMonth)
   if (q.year && q.quarter) {
     selectedYear.value = q.year
     selectedQuarter.value = q.quarter
@@ -198,6 +196,11 @@ export function applyFilterForSignedMonth(signedMonth: string) {
   }
   selectedYear.value = 'all'
   selectedQuarter.value = 'all'
+}
+
+/** @deprecated Use applyFilterForPaidMonth — top filter is 發放季度. */
+export function applyFilterForSignedMonth(signedMonth: string) {
+  applyFilterForPaidMonth(signedMonth)
 }
 
 // Years offered in the filter — data years plus the current default, so the

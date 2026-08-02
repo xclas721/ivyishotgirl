@@ -11,7 +11,7 @@ import {
   requestQuote,
 } from '@/lib/quoteApi'
 import {
-  applyFilterForSignedMonth,
+  applyFilterForPaidMonth,
   canonicalUrl,
   currentMonth,
   ensureLoaded,
@@ -107,7 +107,7 @@ export function useQuoteWorkflow() {
     let ok = 0
     let fail = 0
     let lastRecordId = ''
-    let lastSignedMonth = ''
+    let lastPaidMonth = ''
 
     for (const [i, entry] of entries.entries()) {
       const label = entries.length > 1 ? ` ${i + 1}/${entries.length}` : ''
@@ -128,7 +128,7 @@ export function useQuoteWorkflow() {
         )
         ok += 1
         lastRecordId = recordId
-        lastSignedMonth = finalSignedMonth
+        lastPaidMonth = entry.paidMonth
       } catch (error) {
         fail += 1
         console.error('[fetch-quotes]', entry.url, error)
@@ -149,7 +149,7 @@ export function useQuoteWorkflow() {
       showStatus(`新增完成：${ok} 筆成功、${fail} 筆失敗。`, 'error')
     }
 
-    if (lastRecordId) await revealRecord(lastRecordId, lastSignedMonth)
+    if (lastRecordId) await revealRecord(lastRecordId, lastPaidMonth)
   }
 
   function addQuoteDraftRow() {
@@ -171,9 +171,9 @@ export function useQuoteWorkflow() {
     return '抓取報價單'
   }
 
-  async function revealRecord(recordId: string, signedMonth: string) {
+  async function revealRecord(recordId: string, paidMonth: string) {
     recordSearchQuery.value = ''
-    applyFilterForSignedMonth(signedMonth)
+    applyFilterForPaidMonth(paidMonth)
     ensureSectionVisible('records')
     highlightedRecordId.value = recordId
     await nextTick()
