@@ -7,6 +7,7 @@ import {
 } from '@/composables/ledgerSummary'
 import {
   getLatestPayoutWave,
+  recordMatchesPayoutWave,
   shiftPayoutWave,
   type PayoutWave,
 } from '@/shared/payoutSchedule'
@@ -26,8 +27,11 @@ export function usePayoutRelease() {
     payoutWave.value = getLatestPayoutWave()
   }
 
+  // 8月發放 → 收款月份落在 Q2（5–7月）的案件，不是收款月＝8月
   const payoutRecords = computed(() =>
-    records.value.filter((record) => record.paidMonth === payoutWave.value.paidMonth),
+    records.value.filter((record) =>
+      recordMatchesPayoutWave(record.paidMonth, payoutWave.value),
+    ),
   )
 
   const payoutTotals = computed(() => summarizePayoutRecords(payoutRecords.value))
