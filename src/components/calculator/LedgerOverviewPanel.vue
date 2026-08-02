@@ -17,7 +17,7 @@ const integer = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 })
 <template>
   <section class="panel">
     <div class="section-head">
-      <h2>篩選範圍總覽</h2>
+      <h2>發放篩選總覽</h2>
     </div>
     <div class="totals">
       <div class="total primary">

@@ -4,7 +4,6 @@ import {
   combinedMultiplier,
   formatMultiplier,
   formatNumber,
-  isFilteredQuarter,
   multiplierFor,
 } from '@/composables/ledger'
 import { ledgerSummary } from '@/composables/ledgerSummary'
@@ -25,7 +24,7 @@ const summary = ledgerSummary
         <p class="quarter-section-tag">依回簽月份</p>
         <h2>回簽季度試算</h2>
         <p class="quarter-section-desc">
-          這一季<strong>簽了哪些案子</strong>，業績和倍率加總後的<strong>應計獎金</strong>。獎金%和倍率都看回簽季度。
+          在目前發放篩選範圍內，依<strong>回簽季度</strong>拆開的應計獎金（獎金%和倍率仍看各案回簽季度）。
         </p>
       </div>
     </div>
@@ -35,7 +34,6 @@ const summary = ledgerSummary
         v-for="item in summary.signed"
         :key="item.key"
         class="quarter-card quarter-card--signed"
-        :class="{ 'is-filtered': isFilteredQuarter(item.key) }"
       >
         <div class="quarter-card-top">
           <span class="quarter-badge">{{ item.key }}</span>

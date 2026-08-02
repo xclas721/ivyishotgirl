@@ -32,7 +32,7 @@ function emptyMessage(): string {
     return '還沒有報價單紀錄。貼上網址，按「抓取報價單」就能新增。'
   }
   if (props.quarterFilteredCount === 0) {
-    return '這個篩選範圍下沒有紀錄。換上面的工作季度，或選「全部」看看。'
+    return '這個篩選範圍下沒有紀錄。換上面的發放季度，或選「全部」看看。'
   }
   if (searchQuery.value.trim()) {
     return `找不到符合「${searchQuery.value.trim()}」的紀錄。試試案件編號、客戶名稱或季度。`
