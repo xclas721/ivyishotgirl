@@ -7,8 +7,7 @@
 **需求規格：** [需求清單.md](./需求清單.md)  
 **AI Spec：** [spec/spec-architecture-auth-multi-account-rls.md](../spec/spec-architecture-auth-multi-account-rls.md)  
 **UX 規劃：** [ui-ux-plan.md](./ui-ux-plan.md)  
-**接手提示詞：** [handoff-prompt.md](./handoff-prompt.md)  
-**平行開發計畫：** [parallel-dev-plan.md](./parallel-dev-plan.md)（業務邏輯定版＋下一版階段）
+**接手提示詞：** [handoff-prompt.md](./handoff-prompt.md)
 
 ---
 

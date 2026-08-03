@@ -5,7 +5,6 @@ Vue + TypeScript 前端，搭配 FastAPI proxy 抓取報價單資料的季度獎
 ## 文件
 
 - [交接說明（handoff）](./docs/handoff.md) — 現況、業務規則、個人版驗收評分
-- [平行開發計畫書](./docs/parallel-dev-plan.md) — 業務邏輯定版＋下一版開發階段（2026-08）
 - [接手提示詞](./docs/handoff-prompt.md)
 - [需求清單](./docs/需求清單.md)
 
