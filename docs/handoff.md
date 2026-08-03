@@ -6,7 +6,8 @@
 **維護者：** Kyson Wang  
 **需求規格：** [需求清單.md](./需求清單.md)  
 **AI Spec：** [spec/spec-architecture-auth-multi-account-rls.md](../spec/spec-architecture-auth-multi-account-rls.md)  
-**UX 規劃：** [ui-ux-plan.md](./ui-ux-plan.md)  
+**UX 規劃（個人版 polish）：** [ui-ux-plan.md](./ui-ux-plan.md)  
+**UX 設計（個人版 2.0 · 定位 B · 尚未實作）：** [ux-design-personal-2.md](./ux-design-personal-2.md)  
 **接手提示詞：** [handoff-prompt.md](./handoff-prompt.md)  
 **平行開發計畫：** [parallel-dev-plan.md](./parallel-dev-plan.md)（業務邏輯定版＋下一版階段）
 

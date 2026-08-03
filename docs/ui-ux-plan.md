@@ -1,7 +1,8 @@
 # UI/UX 計畫 — Ivy的獎金
 
-> **更新**：2026-06-30  
-> **狀態**：個人版 polish 已收斂；正式多帳號版 UI 待 spec
+> **更新**：2026-08-03  
+> **狀態**：個人版 polish 已收斂；正式多帳號版 UI 待 spec  
+> **個人版 2.0 UX**：見 [`ux-design-personal-2.md`](./ux-design-personal-2.md)（設計定稿、尚未實作）
 
 ---
 
